@@ -1,32 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* 
- * File:   main.cpp
- * Author: Elisabeth
- *
- * Created on 4 avril 2017, 03:19
- */
-
 #include <cstdlib>
 #include <iostream>
 
 using namespace std;
-
-void aff(unsigned n)
-{
-	unsigned bit = 0 ;
-	unsigned mask = 1 ;
-	for (int i = 0 ; i < 32 ; ++i)
-	{
-		bit = (n & mask) >> i ;
-		printf("%d", bit) ;
-		mask <<= 1 ;
-	}
-}
 
 /* Un polynôme s'écrira sous la forme : a0 + a1X + a2 X² + etc ???*/
 /* Polynome[0]=a0, Polynome[1]=a1, ... */
@@ -46,8 +21,8 @@ int degre;*/
     }
 }*/
 
-// d= deg
-unsigned int rev(unsigned int p, unsigned int d){
+// d = deg
+/*unsigned int rev(unsigned int p, unsigned int d){
    int r=0;
    int i, k;
    
@@ -56,17 +31,70 @@ unsigned int rev(unsigned int p, unsigned int d){
        k=k<<(d-i);
        r=r|k;
        p>>=1;
-       
-       /*cout << "k=" << k << " r=" << r << endl;
-       cout << "k="; aff(k); cout << endl;
-       cout << " r="; aff(r); cout << endl;
-       cout << "p="; aff(p); cout << endl;*/
+   }
+   return r;
+}*/
+
+int mulmod(int a, int n, int m){
+    return (a*n)% m;
+}
+
+int chiffre(int a, int i){
+    int k=0;
+    while(k++<i) a=a/10;
+    return a%10;
+}
+
+int mettre_chiffre(int &a, int b, int i){
+    /*int k=0, debut=a, fin;
+    while(k++ < i) debut = debut/10;
+    fin = a - debut;
+    
+    debut = debut - debut/10 + b;
+    
+    k=0;
+    while(k++ < i) debut = debut*10;
+   
+    debut=debut+fin;
+    return debut;*/
+    
+    int k=0, m=1;
+    
+    while(k++ < i) m*=10;
+    
+    a=a-((a/m)%10)*m+b*m;
+    
+    return a;
+}
+
+int degre(int a){
+    int k=0, tmp;
+    
+    if(a==0) return -1;
+    
+    while((tmp=a/10)!=0) {a=tmp; k++;}
+    
+    return k;
+}
+
+// pour un petit corps de puiss 2, 3, 5 ou 7
+unsigned int rev(unsigned int p, unsigned int d){
+   int r=0;
+   int i, j;
+   int c;
+   
+   for(i=0; i<=d; i++){
+        c=chiffre(p, i);
+        for(j=0; j<p; j++)
+            if(mulmod(c, j, p)==1)
+                mettre_chiffre(r, j, i);
    }
    
    return r;
 }
 
-unsigned int BezoutBinaire(unsigned int *pu, unsigned int *pv, unsigned int a, unsigned int b){
+
+/*unsigned int BezoutBinaire(unsigned int *pu, unsigned int *pv, unsigned int a, unsigned int b){
     int u, v, r, s, p, q;
     int d=0;
     
@@ -174,19 +202,17 @@ unsigned int Bezout(unsigned int *pu, unsigned int *pv, unsigned int a, unsigned
     *pv=v;
     
     return p<<d;
-}
+}*/
 
 // algo 1 : calcul du polynôme minimal d'une suite
-unsigned int pol_min(unsigned int d, unsigned int u){
+/*unsigned int pol_min(unsigned int d, unsigned int u){
     unsigned int s, t;
     unsigned int x=1<<(2*d); // x^{2d}
     
     Bezout(&t, &s, u, x);
     
     return rev(t, d);
-}
-
-
+}*/
 
 
 /*
@@ -211,55 +237,21 @@ void print_b(unsigned int a){
     cout << endl;
 }
 
-int mulmod(int a, int n, int m){
-    return (a*n)% m;
-}
-
-int chiffre(int a, int i){
-    int k=0;
-    while(k++<i) a=a/10;
-    return a%10;
-}
-
-int mettre_chiffre(int &a, int b, int i){
-    /*int k=0, debut=a, fin;
-    while(k++ < i) debut = debut/10;
-    fin = a - debut;
-    
-    debut = debut - debut/10 + b;
-    
-    k=0;
-    while(k++ < i) debut = debut*10;
-   
-    debut=debut+fin;
-    return debut;*/
-    
-    int k=0, m=1;
-    
-    while(k++ < i) m*=10;
-    
-    a=a-((a/m)%10)*m+b*m;
-    
-    return a;
-}
-
-int puissance_de_10(int a){
-    int k=0, tmp;
-    
-    if(a==0) return -1;
-    
-    while((tmp=a/10)!=0) {a=tmp; k++;}
-    
-    return k;
-}
-
 int diff_polynomes(int a, int b, int p){
     int res=0;
-    int i, k;
+    int i, k, d_a, d_b;
 
     //cout << "puiss :" << puissance_de_10(a) << endl;
+   
+    d_a=degre(a);
+    d_b=degre(b);
     
-    for(i=puissance_de_10(a); i>=0; i--){
+    if (d_a>d_b) 
+        i=d_a;
+    else 
+        i=d_b;
+    
+    for(; i>=0; i--){
         //cout << "a=" << chiffre(a, i) << endl;
         //cout << "b=" << chiffre(b, i) << endl;
         k=(chiffre(a, i)+p-chiffre(b, i))%p;
@@ -271,8 +263,8 @@ int diff_polynomes(int a, int b, int p){
 }
 
 int mult_polynomes(int a, int b, int p){
-    int ka=puissance_de_10(a);
-    int kb=puissance_de_10(b);
+    int ka=degre(a);
+    int kb=degre(b);
     int res=0;
     int i, j;
     
@@ -287,8 +279,8 @@ int mult_polynomes(int a, int b, int p){
 }
 
 int division(int a, int b, int p/*, int *reste=NULL*/){
-    int kb=puissance_de_10(b);
-    int q=0, r=a, kr=puissance_de_10(a);
+    int kb=degre(b);
+    int q=0, r=a, kr=degre(a);
     int i;
     int tmp=0;
     int stop =0;
@@ -305,7 +297,7 @@ int division(int a, int b, int p/*, int *reste=NULL*/){
                 r=diff_polynomes(r, mult_polynomes(b, tmp, p), p);
                 /*cout << "on retire : " << mult_polynomes(b, tmp, p);
                 cout << "r=" << r << endl;*/
-                kr=puissance_de_10(r);
+                kr=degre(r);
                 
                 break;
             }
@@ -325,6 +317,9 @@ int bezout(int *u, int *v, int a, int b, int p){
     
     //cout << "1 - dans bezout :" << u0 << " " << v0 << endl;
     
+    cout << "v0 : " << v0 << endl;
+    cout << "v1 : " << v1 << endl;
+    
     while(r1!=0){
         k=division(r0, r1, p);
         
@@ -341,23 +336,36 @@ int bezout(int *u, int *v, int a, int b, int p){
         u1=ut;
 
         // colonne des v :
+        cout << "v0----- " << v0 << endl;
+        cout << "v1----- " << v1 << endl;
         vt=diff_polynomes(v0, mult_polynomes(k, v1, p), p);
         v0=v1;
         v1=vt;
+        cout << "diff----- " << vt << endl;
         
-        cout << "dans bezout 0 :" << u0 << " " << v0 << endl;
+        /*cout << "dans bezout 0 :" << u0 << " " << v0 << endl;
         cout << "r0=" << r0 << endl;
         cout << "dans bezout 1 :" << u1 << " " << v1 << endl;
-        cout << "r1=" << r1 << endl;
+        cout << "r1=" << r1 << endl;*/
     }
     
     *u=u0;
-    cout << "dans bezout 0 :" << u0 << " " << v0 << endl;
-    cout << "dans bezout 1 :" << u1 << " " << v1 << endl;  
+    /*cout << "dans bezout 0 :" << u0 << " " << v0 << endl;
+    cout << "dans bezout 1 :" << u1 << " " << v1 << endl;  */
     
     *v=v0;
     
     return r0;
+}
+
+// algo 1 : calcul du polynôme minimal d'une suite
+int pol_min(int d, int u, int p){
+    int s, t;
+    int x=0; mettre_chiffre(x, 1, 2*d); // x^{2d}
+    
+    bezout(&t, &s, u, x, p);
+    
+    return rev(t, d);
 }
 
 /*int bezout(uint8_t **u, uint8_t **v, uint8_t *a, uint8_t *b){
@@ -379,6 +387,8 @@ int main(int argc, char** argv) {
     
     cout << "bezout : " << bezout(&u, &v, 1000000, 32403, 5) << endl;
     cout << "u=" << u << " v=" << v << endl;
+    
+    cout << "pol min : " << pol_min(3, 32403, 5) << endl;
     
     //cout << "mult = " << mult_polynomes(32403, 221, 5) << endl<<endl;
     //cout << "div : " << division(1000000, 32403, 5) << endl;

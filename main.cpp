@@ -37,7 +37,7 @@ int degre(int a){
     return k;
 }
 
-// renvoie le polynôme "reversal" pour un corps de puiss 2, 3, 5 ou 7
+// renvoie le polynôme "reversal" pour un corps Z/pZ avec p = 2, 3, 5 ou 7
 unsigned int rev(unsigned int p, unsigned int d){
    int r=0;
    int i, j;

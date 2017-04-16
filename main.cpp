@@ -3,61 +3,20 @@
 
 using namespace std;
 
-/* Un polynôme s'écrira sous la forme : a0 + a1X + a2 X² + etc ???*/
-/* Polynome[0]=a0, Polynome[1]=a1, ... */
-
-/*uint8_t* Polynome; 
-int degre;*/
-
-// rev de p
-/*void rev_table(uint8_t &p, int d){
-    int i;
-    uint8_t k;
-    
-    for(i=0; i<d+1; i++){
-        k=p[i];
-        p[i]=p[d-i];
-        p[d-i]=k;
-    }
-}*/
-
-// d = deg
-/*unsigned int rev(unsigned int p, unsigned int d){
-   int r=0;
-   int i, k;
-   
-   for(i=0; i<=d; i++){
-       k=(p&1);
-       k=k<<(d-i);
-       r=r|k;
-       p>>=1;
-   }
-   return r;
-}*/
-
+// a*b modulo m
 int mulmod(int a, int n, int m){
     return (a*n)% m;
 }
 
-int chiffre(int a, int i){
+// récupère de le coefficient de la puissance 10^i-ème dans a
+int get(int a, int i){
     int k=0;
     while(k++<i) a=a/10;
     return a%10;
 }
 
-int mettre_chiffre(int &a, int b, int i){
-    /*int k=0, debut=a, fin;
-    while(k++ < i) debut = debut/10;
-    fin = a - debut;
-    
-    debut = debut - debut/10 + b;
-    
-    k=0;
-    while(k++ < i) debut = debut*10;
-   
-    debut=debut+fin;
-    return debut;*/
-    
+// remplace le coefficient de la puissance 10^i-ème par b dans a
+int set(int &a, int b, int i){
     int k=0, m=1;
     
     while(k++ < i) m*=10;
@@ -67,159 +26,32 @@ int mettre_chiffre(int &a, int b, int i){
     return a;
 }
 
+// renvoie le degré du polynôme de a, 
+// pour le polynôme nul, on renverra -1
 int degre(int a){
     int k=0, tmp;
     
     if(a==0) return -1;
-    
     while((tmp=a/10)!=0) {a=tmp; k++;}
     
     return k;
 }
 
-// pour un petit corps de puiss 2, 3, 5 ou 7
+// renvoie le polynôme "reversal" pour un corps de puiss 2, 3, 5 ou 7
 unsigned int rev(unsigned int p, unsigned int d){
    int r=0;
    int i, j;
    int c;
    
    for(i=0; i<=d; i++){
-        c=chiffre(p, i);
+        c=get(p, i);
         for(j=0; j<p; j++)
             if(mulmod(c, j, p)==1)
-                mettre_chiffre(r, j, i);
+                set(r, j, i);
    }
    
    return r;
 }
-
-
-/*unsigned int BezoutBinaire(unsigned int *pu, unsigned int *pv, unsigned int a, unsigned int b){
-    int u, v, r, s, p, q;
-    int d=0;
-    
-    while(((a&1)==0)&&((b&1)==0)){
-        a>>=1; 
-        b>>=1;
-        d++;
-    }
-    
-    u=1; r=0;
-    v=0; s=1;
-    p=a;
-    q=b;
-    
-    while(q!=0){
-        while((p&1)==0){
-            p>>=1;
-            
-            if(((u&1)==0) && ((v&1)==0)) {
-                u>>=1;
-                v>>=1;
-            }
-            
-            else{
-                u=(u-b)>>1; v=(v+a)>>1;
-            }
-            
-            while ((q&1)==0) {
-                q>>=1;
-                if(((r&1)==0) && ((s&1)==0)) {
-                    s>>=1;
-                    r>>=1;
-                }
-                else {
-                    r=(r-b)>>1;
-                    s=(s+a)>>1;
-                }
-            }
-            
-            if(p>q) {
-                p-=q;
-                v-=s;
-                u-=r;
-            }
-            else {
-                q-=p;
-                s-=v;
-                r-=u;
-            }
-        }
-        
-        *pu=u;
-        *pv=v;
-        
-        return p<<d;
-    }
-}
-
-unsigned int Bezout(unsigned int *pu, unsigned int *pv, unsigned int a, unsigned int b){
-    int d=0, u=1, v=0, r=0, s=1, p=a, q=b;
-    
-    while((a&1==0) &&  ((b&1)==0)){
-        a>>=1;
-        b>>=1;
-        d++;
-    }
-    
-    while(q!=0){
-        while((p&1)==0){
-            p>>=1;
-            if(((u&1)==0) && ((v&1)==0)){
-                u>>=1;
-                v>>=1;
-            }
-            else{
-                u=(u-b)>>1;
-                v=(v+a)>>1;
-            }
-        }
-        
-        while((q&1)==0){
-            q>>=1;
-            if(((r&1)==0) && ((s&1)==0)) 
-                {s>>=1; r>>=1;}
-            else{
-                r=(r-b)>>1;
-                s=(s+a)>>1;
-            }
-        }
-        
-        if(p>q){
-            p-=q;
-            v-=s;
-            u-=r;
-        }
-        else{
-            q-=p;
-            s-=v;
-            r-=u;
-        }
-    }
-    
-    // affectation des résultats et retour de la fonction
-    *pu=u;
-    *pv=v;
-    
-    return p<<d;
-}*/
-
-// algo 1 : calcul du polynôme minimal d'une suite
-/*unsigned int pol_min(unsigned int d, unsigned int u){
-    unsigned int s, t;
-    unsigned int x=1<<(2*d); // x^{2d}
-    
-    Bezout(&t, &s, u, x);
-    
-    return rev(t, d);
-}*/
-
-
-/*
- 
- * voir algo trouvé
- 
- */
 
 // Affiche un unsigned int en binaire :
 void print_b(unsigned int a){
@@ -237,152 +69,122 @@ void print_b(unsigned int a){
     cout << endl;
 }
 
-int diff_polynomes(int a, int b, int p){
+// renvoie la différence du polynôme a par le polynôme b, dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
+int diff_p(int a, int b, int p){
     int res=0;
     int i, k, d_a, d_b;
-
-    //cout << "puiss :" << puissance_de_10(a) << endl;
    
+    // on récupère le degré de a et de b :
     d_a=degre(a);
     d_b=degre(b);
     
+    // on met dans i le max de {degré de a; degré de b}
     if (d_a>d_b) 
         i=d_a;
     else 
         i=d_b;
     
+    // on soustrait les coefficients de a et de b et on les place dans res :
     for(; i>=0; i--){
-        //cout << "a=" << chiffre(a, i) << endl;
-        //cout << "b=" << chiffre(b, i) << endl;
-        k=(chiffre(a, i)+p-chiffre(b, i))%p;
-        //cout << "k=" << k << endl;
-        mettre_chiffre(res, k, i);
+        k=(get(a, i)+p-get(b, i))%p;
+        set(res, k, i);
     }
     
     return res;
 }
 
-int mult_polynomes(int a, int b, int p){
+// renvoie la multiplication du polynôme a par le polynôme b, dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
+int mult_p(int a, int b, int p){
     int ka=degre(a);
     int kb=degre(b);
     int res=0;
     int i, j;
     
-    for(i=ka; i>=0; i--){
-        for(j=kb; j>=0; j--){
-            //cout << chiffre(a,i) << " " << chiffre(b,j) << endl;
-            mettre_chiffre(res, (chiffre(res, i+j)+mulmod(chiffre(a, i), chiffre(b, j), p))%p, i+j);
-        }
-    }
+    // on multiplie les coefficients et on les places dans res :
+    for(i=ka; i>=0; i--)
+        for(j=kb; j>=0; j--)
+            set(res, (get(res, i+j)+mulmod(get(a, i), get(b, j), p))%p, i+j);
     
     return res;    
 }
 
-int division(int a, int b, int p/*, int *reste=NULL*/){
+// division du polynôme a par le polynôme b, dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
+int div_p(int a, int b, int p){
     int kb=degre(b);
     int q=0, r=a, kr=degre(a);
     int i;
-    int tmp=0;
-    int stop =0;
+    int tmp=0;    
     
-    
-    while(kr>=kb && stop++<10){
+    // tant que le degré du dividende est plus grand ou égal à celui du diviseur
+    while(kr>=kb){
+        // on cherche le coefficient qui, multiplié au diviseur, donne celui du dividende :
         for(i=0; i<p; i++){
-            if(mulmod(i, chiffre(b, kb), p) == chiffre(r, kr)){
+            if(mulmod(i, get(b, kb), p) == get(r, kr)){
+                // on met à jour une variable tempioraire :
                 tmp=0;
-                mettre_chiffre(tmp, i, kr-kb);
-                mettre_chiffre(q, i, kr-kb);
-                /*cout << "r=" << r << endl;
-                cout << "tmp=" << tmp << endl;*/
-                r=diff_polynomes(r, mult_polynomes(b, tmp, p), p);
-                /*cout << "on retire : " << mult_polynomes(b, tmp, p);
-                cout << "r=" << r << endl;*/
+                set(tmp, i, kr-kb);
+                // on met à jour le quotient : 
+                set(q, i, kr-kb);
+                // on soustrait (comme dans l'algorithme) pour obtenir le nouveau dividende :
+                r=diff_p(r, mult_p(b, tmp, p), p);
+                // on met à jour le degré du dividende :
                 kr=degre(r);
-                
                 break;
             }
         }
     }    
     
-    /**reste=r;*/
-    
     return q;
 }
 
-// p=2, 3, 5 ou 7 seulement :
+// renvoie le pgcd et met à jour les coefficients u et v, 
+// sur les polynômes a et b et dans un corps Z/pZ, avec p=2, 3, 5 ou 7
 int bezout(int *u, int *v, int a, int b, int p){
     int u0=1, v0=0, u1=0, v1=1, ut, vt;
     int r0=a, r1=b, rt;
-    int k;
-    
-    //cout << "1 - dans bezout :" << u0 << " " << v0 << endl;
-    
-    cout << "v0 : " << v0 << endl;
-    cout << "v1 : " << v1 << endl;
+    int q;
     
     while(r1!=0){
-        k=division(r0, r1, p);
+        q=div_p(r0, r1, p);
         
-        cout << "k: " << k << endl;
+        cout << "q = " << q << endl;
         
         // colonne des restes :
-        rt=diff_polynomes(r0, mult_polynomes(k, r1, p), p);
+        rt=diff_p(r0, mult_p(q, r1, p), p);
         r0=r1; 
         r1=rt;
 
         // colonne des u : 
-        ut=diff_polynomes(u0, mult_polynomes(k, u1, p), p);
+        ut=diff_p(u0, mult_p(q, u1, p), p);
         u0=u1;
         u1=ut;
 
         // colonne des v :
-        cout << "v0----- " << v0 << endl;
-        cout << "v1----- " << v1 << endl;
-        vt=diff_polynomes(v0, mult_polynomes(k, v1, p), p);
+        cout << "v0 = " << v0 << endl;
+        cout << "v1 = " << v1 << endl;
+        vt=diff_p(v0, mult_p(q, v1, p), p);
         v0=v1;
         v1=vt;
-        cout << "diff----- " << vt << endl;
-        
-        /*cout << "dans bezout 0 :" << u0 << " " << v0 << endl;
-        cout << "r0=" << r0 << endl;
-        cout << "dans bezout 1 :" << u1 << " " << v1 << endl;
-        cout << "r1=" << r1 << endl;*/
     }
     
-    *u=u0;
-    /*cout << "dans bezout 0 :" << u0 << " " << v0 << endl;
-    cout << "dans bezout 1 :" << u1 << " " << v1 << endl;  */
-    
+    // mise à jour de u et v
+    *u=u0;    
     *v=v0;
     
     return r0;
 }
 
-// algo 1 : calcul du polynôme minimal d'une suite
+// algo 1 : calcul du polynôme minimal d'une suite pour un corps Z/pZ, avec p=2, 3, 5 ou 7
 int pol_min(int d, int u, int p){
     int s, t;
-    int x=0; mettre_chiffre(x, 1, 2*d); // x^{2d}
+    int x=0; set(x, 1, 2*d); // x^{2d}
     
     bezout(&t, &s, u, x, p);
     
     return rev(t, d);
 }
 
-/*int bezout(uint8_t **u, uint8_t **v, uint8_t *a, uint8_t *b){
-    uint8_t *u0, *v0, *u1, *v1;
-    
-    
-}*/
-
 int main(int argc, char** argv) {
-    //unsigned int polynome=100010; 
-    //unsigned int p2=0b110110;
-    //cout << p2 << endl; 
-    
-    //cout << rev(p2, 6) << endl;
-    
-    //aff(pol_min(3, p2));
-
     int u, v;
     
     cout << "bezout : " << bezout(&u, &v, 1000000, 32403, 5) << endl;

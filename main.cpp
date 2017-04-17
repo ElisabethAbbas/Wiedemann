@@ -38,7 +38,7 @@ int degre(int a){
 }
 
 // renvoie le polynôme "reversal" pour un corps Z/pZ avec p = 2, 3, 5 ou 7
-unsigned int rev(unsigned int p, unsigned int d){
+/*unsigned int rev(unsigned int p, unsigned int d){
    int r=0;
    int i, j;
    int c;
@@ -49,6 +49,16 @@ unsigned int rev(unsigned int p, unsigned int d){
             if(mulmod(c, j, p)==1)
                 set(r, j, i);
    }
+   
+   return r;
+}*/
+
+// renvoie le polynôme "reversal" pour un corps Z/pZ avec p = 2, 3, 5 ou 7
+int rev(int p, int d){
+   int i, r=0;
+   
+   for(i=0; i<=d; i++)
+        set(r, get(p, i), d-i);
    
    return r;
 }
@@ -102,8 +112,10 @@ int mult_p(int a, int b, int p){
     
     // on multiplie les coefficients et on les places dans res :
     for(i=ka; i>=0; i--)
-        for(j=kb; j>=0; j--)
+        for(j=kb; j>=0; j--){
             set(res, (get(res, i+j)+mulmod(get(a, i), get(b, j), p))%p, i+j);
+            //cout << "i+j=" << i+j << " get=" << get(res, i+j) << endl;
+        }
     
     return res;    
 }
@@ -115,6 +127,8 @@ int div_p(int a, int b, int p){
     int i;
     int tmp=0;    
     
+    //cout << "a=" << a << " b=" << b << endl;
+    
     // tant que le degré du dividende est plus grand ou égal à celui du diviseur
     while(kr>=kb){
         // on cherche le coefficient qui, multiplié au diviseur, donne celui du dividende :
@@ -125,6 +139,11 @@ int div_p(int a, int b, int p){
                 set(tmp, i, kr-kb);
                 // on met à jour le quotient : 
                 set(q, i, kr-kb);
+                /*cout << "r=" << r << endl;
+                cout << "q=" << q << endl;
+                cout << "tmp=" << tmp << endl;
+                cout << "à soustraire : " << mult_p(b, tmp, p) << endl;*/
+                
                 // on soustrait (comme dans l'algorithme) pour obtenir le nouveau dividende :
                 r=diff_p(r, mult_p(b, tmp, p), p);
                 // on met à jour le degré du dividende :
@@ -147,21 +166,24 @@ int bezout(int *u, int *v, int a, int b, int p){
     while(r1!=0){
         q=div_p(r0, r1, p);
         
-        cout << "q = " << q << endl;
+        //cout << "q = " << q << endl;
         
         // colonne des restes :
         rt=diff_p(r0, mult_p(q, r1, p), p);
         r0=r1; 
         r1=rt;
 
+        
         // colonne des u : 
+        //cout << "u0 = " << u0 << endl;
+        //cout << "u1 = " << u1 << endl;
         ut=diff_p(u0, mult_p(q, u1, p), p);
         u0=u1;
         u1=ut;
 
         // colonne des v :
-        cout << "v0 = " << v0 << endl;
-        cout << "v1 = " << v1 << endl;
+        //cout << "v0 = " << v0 << endl;
+        //cout << "v1 = " << v1 << endl;
         vt=diff_p(v0, mult_p(q, v1, p), p);
         v0=v1;
         v1=vt;
@@ -174,28 +196,89 @@ int bezout(int *u, int *v, int a, int b, int p){
     return r0;
 }
 
+// renvoie le pgcd et met à jour les coefficients u et v, 
+// sur les polynômes a et b et dans un corps Z/pZ, avec p=2, 3, 5 ou 7
+// avec les conditions de l'algo 1
+int bezout_algo1(int *u, int *v, int a, int b, int p){
+    int u0=1, v0=0, u1=0, v1=1, ut, vt;
+    int r0=a, r1=b, rt;
+    int q;
+    int d_n = degre(b)/2;
+    
+    while(r1!=0){
+        q=div_p(r0, r1, p);
+        
+        // colonne des restes :
+        rt=diff_p(r0, mult_p(q, r1, p), p);
+        r0=r1; 
+        r1=rt;
+        
+        // colonne des u : 
+        ut=diff_p(u0, mult_p(q, u1, p), p);
+        u0=u1;
+        u1=ut;
+
+        // colonne des v :
+        vt=diff_p(v0, mult_p(q, v1, p), p);
+        v0=v1;
+        v1=vt;
+        
+        // mise à jour de u et v
+        if(degre(u1)<=d_n && degre(r1)<d_n){
+            *u=u1;    
+            *v=r1;
+            return q;
+        }
+    }
+    
+    return r0;
+}
+
 // algo 1 : calcul du polynôme minimal d'une suite pour un corps Z/pZ, avec p=2, 3, 5 ou 7
 int pol_min(int d, int u, int p){
-    int s, t;
+    int s, t, s2, t2;
     int x=0; set(x, 1, 2*d); // x^{2d}
+    int pgcd;
+    int d2, deg_s, deg_t;
     
-    bezout(&t, &s, u, x, p);
+    bezout_algo1(&t, &s, u, x, p);
     
-    return rev(t, d);
+    pgcd=bezout(&t2, &s2, t, s, p);
+    
+    t=mult_p(t, pgcd, p);
+    s=mult_p(s, pgcd, p);
+    
+    deg_t=degre(t);
+    deg_s=degre(s);
+    
+    if(deg_s+1>deg_t)
+        d2=deg_s+1;
+    else
+        d2=deg_t;
+    
+    return rev(t, d2);
 }
 
 int main(int argc, char** argv) {
-    int u, v;
+    //int u, v;
     
-    cout << "bezout : " << bezout(&u, &v, 1000000, 32403, 5) << endl;
-    cout << "u=" << u << " v=" << v << endl;
+    /*cout << "bezout : " << bezout(&u, &v, 1000000, 32403, 5) << endl;
+    cout << "u=" << u << " v=" << v << endl;*/
     
-    cout << "pol min : " << pol_min(3, 32403, 5) << endl;
+    cout << "pol min : " << pol_min(3, 32403, 5) << endl << endl << endl;
+    cout << "pol min : " << pol_min(3, 10100, 3) << endl;
     
-    //cout << "mult = " << mult_polynomes(32403, 221, 5) << endl<<endl;
-    //cout << "div : " << division(1000000, 32403, 5) << endl;
-    //cout << "diff = " << diff_polynomes(1000000, 1430100, 5) << endl;
-    //cout << "div : " << division(42, 3, 5) << endl;
+    //cout << "mult = " << mult_p(32403, 221, 5) << endl;
+    //cout << "div : " << div_p(1000000, 32403, 5) << endl;
+    /*cout << "div : " << div_p(1000000, 10100, 3) << endl;
+    cout << "m : " << mult_p(102, 10100, 3) << endl;
+    cout << "r=" << diff_p(1000000, mult_p(102, 10100, 3), 3) << endl;
+    cout << "div : " << div_p(10100, 100, 3) << endl;
+    cout << "m : " << mult_p(101, 100, 3) << endl;
+    cout << "r=" << diff_p(10100, mult_p(100, 101, 3), 3) << endl;*/
+    //cout << "div : " << div_p(1000000, 10100, 3) << endl;
+    //cout << "diff = " << diff_p(1000000, 1430100, 5) << endl;
+    //cout << "div : " << div_p(42, 3, 5) << endl;
     
     return 0;
 }

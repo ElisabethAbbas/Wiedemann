@@ -172,7 +172,6 @@ int bezout(int *u, int *v, int a, int b, int p){
         rt=diff_p(r0, mult_p(q, r1, p), p);
         r0=r1; 
         r1=rt;
-
         
         // colonne des u : 
         //cout << "u0 = " << u0 << endl;
@@ -240,14 +239,34 @@ int pol_min(int d, int u, int p){
     int x=0; set(x, 1, 2*d); // x^{2d}
     int pgcd;
     int d2, deg_s, deg_t;
+    int i=0, j=0, tmp;
     
+    // on fait bezout tant que les degrés de t et s ne correspondent pas :
     bezout_algo1(&t, &s, u, x, p);
     
+    // on faire le pgcd de t et s pour les diviser et ainsi les rendre premiers entre eux
     pgcd=bezout(&t2, &s2, t, s, p);
     
-    t=mult_p(t, pgcd, p);
-    s=mult_p(s, pgcd, p);
+    t=div_p(t, pgcd, p);
+    //s=div_p(s, pgcd, p); en commentaire, car on a pas besoin de s
     
+    // on cherche à rendre rev(t) unitaire, 
+    // donc le dernier chiffre différent de 0 doit être égal à 1 : 
+    tmp=t;
+    while((tmp%10)==0){
+        tmp=tmp/10;
+        i++;
+    }
+    tmp=tmp%10;
+    
+    for(j=0 ; j<p ; j++)
+        if(mulmod(j, tmp, p)==1)
+            break;
+    
+    t=mult_p(t, j, p);
+    //s=mult_p(s, j, p); en commentaire, car on a pas besoin de s
+    
+    // on cherche le degré du polynôme minimal : 
     deg_t=degre(t);
     deg_s=degre(s);
     
@@ -256,6 +275,7 @@ int pol_min(int d, int u, int p){
     else
         d2=deg_t;
     
+    // on renvoie le "reversal" de t
     return rev(t, d2);
 }
 

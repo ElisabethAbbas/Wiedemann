@@ -370,18 +370,6 @@ int horner_mat(int f, int *A, int b, int n, int p){
     return res;
 }
 
-// le réécrire avec horner si possible : 
-int eval_pol_at_matrice(int f, int *A, int b, int n, int p){
-    int i=0, d=degre(f), res=0;
-    for(i=0; i<=d; i++){
-        res=add_vect_vect(res, mult_coeff_vect(b, (f%10), p), n, p); // mul vect
-        f=f/10;
-        b=mult_mat_vect(A, b, n, p);
-    }
-    
-    return res;
-}
-
 // algo 2 : renvoie la solution de Ay=b : 
 int pol_min_matrice(int *A, int n, int b, int p){
     int i, u=100, n2, seq=0, m=1, j=0, b2=b; // mettre un u random
@@ -398,7 +386,7 @@ int pol_min_matrice(int *A, int n, int b, int p){
             m=pol_min(n, seq, p);
             //cout << "m=" << m << endl;
             u=120; // mettre un u random
-        }while(eval_pol_at_matrice(m, A, b, n, p)!=0 && j++<10);
+        }while(horner_mat(m, A, b, n, p)!=0 && j++<10);
         return m;
     }
 }
@@ -419,45 +407,14 @@ int Wiedemann(int *A, int n, int b, int p){
 }
 
 int main(int argc, char** argv) {
-    //int u, v;
-    
-    /*cout << "bezout : " << bezout(&u, &v, 1000000, 32403, 5) << endl;
-    cout << "u=" << u << " v=" << v << endl;*/
-    
-    cout << "pol min : " << pol_min(3, 32403, 5) << endl;
-    cout << "pol min : " << pol_min(3, 10100, 3) << endl;
-    
-    //cout << "mult = " << mult_p(32403, 221, 5) << endl;
-    //cout << "div : " << div_p(1000000, 32403, 5) << endl;
-    /*cout << "div : " << div_p(1000000, 10100, 3) << endl;
-    cout << "m : " << mult_p(102, 10100, 3) << endl;
-    cout << "r=" << diff_p(1000000, mult_p(102, 10100, 3), 3) << endl;
-    cout << "div : " << div_p(10100, 100, 3) << endl;
-    cout << "m : " << mult_p(101, 100, 3) << endl;
-    cout << "r=" << diff_p(10100, mult_p(100, 101, 3), 3) << endl;*/
-    //cout << "div : " << div_p(1000000, 10100, 3) << endl;
-    //cout << "diff = " << diff_p(1000000, 1430100, 5) << endl;
-    //cout << "div : " << div_p(42, 3, 5) << endl;
-    
-    //cout << horner(10204, 3, 5) << endl;
-    //cout << horner(2000511, 1, 7) << endl;
-    //cout << horner(2000511, 2, 7) << endl;
+    cout << "Polynôme minimal : " << pol_min(3, 32403, 5) << endl;
+    cout << "Polynôme minimal : " << pol_min(3, 10100, 3) << endl;
     
     int A[3]={144, 403, 124};
     int b=312;
-    //int b2=33;
-    //int b3=443;
-    
-    //cout << "res mat fois vect : " << mult_mat_vect(A, b, 3, 5) << endl;
-    //cout << "res mat fois mat : " << mult_mat_mat(A, A, 3, 5) << endl;
-    //cout << "res : " << mult_mat_vect(A, b2, 3, 5) << endl;
-    //cout << "res : " << mult_mat_vect(A, b3, 3, 5) << endl;
     
     cout << "Polynôme minimal : " << pol_min_matrice(A, 3, b, 5) << endl; 
-    
     cout << "Wiedemann : " << Wiedemann(A, 3, b, 5) << endl;
-    
-    
     return 0;
 }
 

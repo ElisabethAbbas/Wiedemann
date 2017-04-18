@@ -279,6 +279,26 @@ int pol_min(int d, int u, int p){
     return rev(t, d2);
 }
 
+// évaluation en a de f sur Z/pZ avec p = 2, 3, 5 ou 7
+// avec la méthode de horner
+int horner(int f, int a, int p){
+    int i, d=degre(f), tmp=0;
+    
+    // pour avoir accès à la puissance la plus haute en premier :
+    f=rev(f, d);
+    
+    cout << "rev : " << f << endl;
+    
+    for(i=0 ; i<=d ; i++){
+        cout << "f%10=" << f%10 << endl;
+        tmp=(mulmod(tmp, a, p)+(f%10))%p;
+        cout << "tmp=" << tmp << endl;
+        f=f/10;
+    }
+    
+    return tmp;
+}
+
 int main(int argc, char** argv) {
     //int u, v;
     
@@ -299,6 +319,10 @@ int main(int argc, char** argv) {
     //cout << "div : " << div_p(1000000, 10100, 3) << endl;
     //cout << "diff = " << diff_p(1000000, 1430100, 5) << endl;
     //cout << "div : " << div_p(42, 3, 5) << endl;
+    
+    //cout << horner(10204, 3, 5) << endl;
+    //cout << horner(2000511, 1, 7) << endl;
+    //cout << horner(2000511, 2, 7) << endl;
     
     return 0;
 }

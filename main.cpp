@@ -128,10 +128,6 @@ int div_p(int a, int b, int p){
                 set(tmp, i, kr-kb);
                 // on met à jour le quotient : 
                 set(q, i, kr-kb);
-                /*cout << "r=" << r << endl;
-                cout << "q=" << q << endl;
-                cout << "tmp=" << tmp << endl;
-                cout << "à soustraire : " << mult_p(b, tmp, p) << endl;*/
                 
                 // on soustrait (comme dans l'algorithme) pour obtenir le nouveau dividende :
                 r=diff_p(r, mult_p(b, tmp, p), p);

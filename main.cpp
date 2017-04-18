@@ -68,6 +68,29 @@ int rev(int p, int d){
    return r;
 }
 
+int add_p(int a, int b, int p){
+    int res=0;
+    int i, k, d_a, d_b;
+   
+    // on récupère le degré de a et de b :
+    d_a=degre(a);
+    d_b=degre(b);
+    
+    // on met dans i le max de {degré de a; degré de b}
+    if (d_a>d_b) 
+        i=d_a;
+    else 
+        i=d_b;
+    
+    // on soustrait les coefficients de a et de b et on les place dans res :
+    for(; i>=0; i--){
+        k=(get(a, i)+get(b, i))%p;
+        set(res, k, i);
+    }
+    
+    return res;
+}
+
 // renvoie la différence du polynôme a par le polynôme b, dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
 int diff_p(int a, int b, int p){
     int res=0;
@@ -264,23 +287,6 @@ int pol_min(int d, int u, int p){
     return rev(t, d2);
 }
 
-// évaluation en a de f sur Z/pZ avec p = 2, 3, 5 ou 7
-// avec la méthode de horner
-int horner(int f, int a, int p){
-    int i, d=degre(f), res=0;
-    
-    // pour avoir accès à la puissance la plus haute en premier :
-    f=rev(f, d);
-    
-    // méthode d'Horner :
-    for(i=0 ; i<=d ; i++){
-        res=addmod(mulmod(res, a, p),(f%10),p);
-        f=f/10;
-    }
-    
-    return res;
-}
-
 int mult_mat_vect(int *A, int b, int n, int p){
     int i, j, Ai, b2, res=0;
     
@@ -329,6 +335,41 @@ int add_vect_vect(int v1, int v2, int n, int p){
     return res;
 }
 
+// évaluation en a de f sur Z/pZ avec p = 2, 3, 5 ou 7
+// avec la méthode de horner
+int horner(int f, int a, int p){
+    int i, d=degre(f), res=0;
+    
+    // pour avoir accès à la puissance la plus haute en premier :
+    f=rev(f, d);
+    
+    // méthode d'Horner :
+    for(i=0 ; i<=d ; i++){
+        res=addmod(mulmod(res, a, p),(f%10),p);
+        f=f/10;
+    }
+    
+    return res;
+}
+
+// évaluation en a de f sur Z/pZ avec p = 2, 3, 5 ou 7
+// avec la méthode de horner
+int horner_mat(int f, int *A, int b, int n, int p){
+    int i, d=degre(f), res=0, b_tmp;
+    
+    // pour avoir accès à la puissance la plus haute en premier :
+    f=rev(f, d);
+    
+    // méthode d'Horner :
+    for(i=0 ; i<=d ; i++){
+        b_tmp=mult_coeff_vect(b, (f%10), p);
+        res=add_p(mult_mat_vect(A, res, n, p), b_tmp, p);
+        f=f/10;
+    }
+    
+    return res;
+}
+
 // le réécrire avec horner si possible : 
 int eval_pol_at_matrice(int f, int *A, int b, int n, int p){
     int i=0, d=degre(f), res=0;
@@ -351,7 +392,7 @@ int pol_min_matrice(int *A, int n, int b, int p){
             n2=2*n;
             b2=b;
             for(i=0; i<n2; i++){
-                set(seq, mult_vect_vect(u, b2, n, p), i); // vérifer que la seq est dans le bon ordre
+                set(seq, mult_vect_vect(u, b2, n, p), i);
                 b2=mult_mat_vect(A, b2, n, p);
             }
             m=pol_min(n, seq, p);
@@ -362,13 +403,28 @@ int pol_min_matrice(int *A, int n, int b, int p){
     }
 }
 
+// algo 3 : algo de Wiedemann
+int Wiedemann(int *A, int n, int b, int p){
+    int m = pol_min_matrice(A, n, b, p);
+    int h;
+    int h1, h2, x=10;
+    int m0 = horner(m, 0, p);
+    
+    h1 = mult_p(diff_p(m, m0, p), -1+p, p);
+    h2=mult_p(m0, x, p);
+    
+    h=div_p(h1, h2, p);
+    
+    return horner_mat(h, A, b, n, p);    
+}
+
 int main(int argc, char** argv) {
     //int u, v;
     
     /*cout << "bezout : " << bezout(&u, &v, 1000000, 32403, 5) << endl;
     cout << "u=" << u << " v=" << v << endl;*/
     
-    cout << "pol min : " << pol_min(3, 32403, 5) << endl << endl << endl;
+    cout << "pol min : " << pol_min(3, 32403, 5) << endl;
     cout << "pol min : " << pol_min(3, 10100, 3) << endl;
     
     //cout << "mult = " << mult_p(32403, 221, 5) << endl;
@@ -389,8 +445,8 @@ int main(int argc, char** argv) {
     
     int A[3]={144, 403, 124};
     int b=312;
-    int b2=33;
-    int b3=443;
+    //int b2=33;
+    //int b3=443;
     
     //cout << "res mat fois vect : " << mult_mat_vect(A, b, 3, 5) << endl;
     //cout << "res mat fois mat : " << mult_mat_mat(A, A, 3, 5) << endl;
@@ -398,6 +454,10 @@ int main(int argc, char** argv) {
     //cout << "res : " << mult_mat_vect(A, b3, 3, 5) << endl;
     
     cout << "Polynôme minimal : " << pol_min_matrice(A, 3, b, 5) << endl; 
+    
+    cout << "Wiedemann : " << Wiedemann(A, 3, b, 5) << endl;
+    
+    
     return 0;
 }
 

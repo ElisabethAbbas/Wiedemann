@@ -287,12 +287,8 @@ int horner(int f, int a, int p){
     // pour avoir accès à la puissance la plus haute en premier :
     f=rev(f, d);
     
-    cout << "rev : " << f << endl;
-    
     for(i=0 ; i<=d ; i++){
-        cout << "f%10=" << f%10 << endl;
         tmp=(mulmod(tmp, a, p)+(f%10))%p;
-        cout << "tmp=" << tmp << endl;
         f=f/10;
     }
     

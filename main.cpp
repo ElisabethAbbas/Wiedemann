@@ -3,15 +3,9 @@
 
 using namespace std;
 
-// (a+b) mod p
-int addmod(int a, int b, int p){
-    return (a+b)%p;
-}
-
-// (a*b) mod p
-int mulmod(int a, int b, int p){
-    return (a*b)%p;
-}
+/*----------------------------------------------------------------------------*/
+/*Affichage d'un unsigned int en binaire */
+/*----------------------------------------------------------------------------*/
 
 // Affiche un unsigned int en binaire :
 void print_b(unsigned int a){
@@ -29,25 +23,25 @@ void print_b(unsigned int a){
     cout << endl;
 }
 
-// récupère de le coefficient de la puissance 10^i-ème dans a
-int get(int a, int i){
-    int k=0;
-    while(k++<i) a=a/10;
-    return a%10;
+/*----------------------------------------------------------------------------*/
+/*Fonctions sur des nombres modulo p */
+/*----------------------------------------------------------------------------*/
+
+// (a+b) mod p
+int addmod(int a, int b, int p){
+    return (a+b)%p;
 }
 
-// remplace le coefficient de la puissance 10^i-ème par b dans a
-int set(int &a, int b, int i){
-    int k=0, m=1;
-    
-    while(k++ < i) m*=10;
-    
-    a=a-((a/m)%10)*m+b*m;
-    
-    return a;
+// (a*b) mod p
+int mulmod(int a, int b, int p){
+    return (a*b)%p;
 }
 
-// renvoie le degré du polynôme de a, 
+/*----------------------------------------------------------------------------*/
+/*Fonctions sur les polynômes */
+/*----------------------------------------------------------------------------*/
+
+// renvoie le degré du polynôme a, 
 // pour le polynôme nul, on renverra -1
 int degre(int a){
     int k=0, tmp;
@@ -56,6 +50,28 @@ int degre(int a){
     while((tmp=a/10)!=0) {a=tmp; k++;}
     
     return k;
+}
+
+/*----------------------------------------------------------------------------*/
+/*Fonctions sur les polynômes dans Z/pZ, p=2,3,5 ou 7 */
+/*----------------------------------------------------------------------------*/
+
+// récupère de le coefficient de la puissance 10^i-ème dans le polynôme a
+int get(int a, int i){
+    int k=0;
+    while(k++<i) a=a/10;
+    return a%10;
+}
+
+// remplace le coefficient de la puissance 10^i-ème par b dans le polynôme a
+int set(int &a, int b, int i){
+    int k=0, m=1;
+    
+    while(k++ < i) m*=10;
+    
+    a=a-((a/m)%10)*m+b*m;
+    
+    return a;
 }
 
 // renvoie le polynôme "reversal" pour un corps Z/pZ avec p = 2, 3, 5 ou 7
@@ -68,6 +84,8 @@ int rev(int p, int d){
    return r;
 }
 
+// renvoie la somme du polynôme a et du polynôme b, 
+// dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
 int add_p(int a, int b, int p){
     int res=0;
     int i, k, d_a, d_b;
@@ -91,7 +109,8 @@ int add_p(int a, int b, int p){
     return res;
 }
 
-// renvoie la différence du polynôme a par le polynôme b, dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
+// renvoie la différence du polynôme a par le polynôme b, 
+// dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
 int diff_p(int a, int b, int p){
     int res=0;
     int i, k, d_a, d_b;
@@ -115,7 +134,8 @@ int diff_p(int a, int b, int p){
     return res;
 }
 
-// renvoie la multiplication du polynôme a par le polynôme b, dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
+// renvoie la multiplication du polynôme a par le polynôme b, 
+// dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
 int mult_p(int a, int b, int p){
     int ka=degre(a);
     int kb=degre(b);
@@ -132,7 +152,8 @@ int mult_p(int a, int b, int p){
     return res;    
 }
 
-// division du polynôme a par le polynôme b, dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
+// division du polynôme a par le polynôme b, 
+// dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
 int div_p(int a, int b, int p){
     int kb=degre(b);
     int q=0, r=a, kr=degre(a);
@@ -241,67 +262,9 @@ int bezout_algo1(int *u, int *v, int a, int b, int p){
     return r0;
 }
 
-// algo 1 : calcul du polynôme minimal d'une suite pour un corps Z/pZ, avec p=2, 3, 5 ou 7
-int pol_min(int d, int u, int p){
-    int s, t, s2, t2;
-    int x=0; set(x, 1, 2*d); // x^{2d}
-    int pgcd;
-    int d2, deg_s, deg_t;
-    int i=0, j=0, tmp;
-    
-    // on fait bezout tant que les degrés de t et s ne correspondent pas :
-    bezout_algo1(&t, &s, u, x, p);
-    
-    // on faire le pgcd de t et s pour les diviser et ainsi les rendre premiers entre eux
-    pgcd=bezout(&t2, &s2, t, s, p);
-    
-    t=div_p(t, pgcd, p);
-    //s=div_p(s, pgcd, p); en commentaire, car on a pas besoin de s
-    
-    // on cherche à rendre rev(t) unitaire, 
-    // donc le dernier chiffre différent de 0 doit être égal à 1 : 
-    tmp=t;
-    while((tmp%10)==0){
-        tmp=tmp/10;
-        i++;
-    }
-    tmp=tmp%10;
-    
-    for(j=0 ; j<p ; j++)
-        if(mulmod(j, tmp, p)==1)
-            break;
-    
-    t=mult_p(t, j, p);
-    //s=mult_p(s, j, p); en commentaire, car on a pas besoin de s
-    
-    // on cherche le degré du polynôme minimal : 
-    deg_t=degre(t);
-    deg_s=degre(s);
-    
-    if(deg_s+1>deg_t)
-        d2=deg_s+1;
-    else
-        d2=deg_t;
-    
-    // on renvoie le "reversal" de t
-    return rev(t, d2);
-}
-
-int mult_mat_vect(int *A, int b, int n, int p){
-    int i, j, Ai, b2, res=0;
-    
-    for(i=0; i<n; i++){
-        Ai=A[i];
-        b2=b;
-        for(j=0; j<n; j++){
-           set(res, addmod(get(res, n-i-1), mulmod((Ai%10), (b2%10), p), p), n-i-1);
-           Ai=Ai/10;
-           b2=b2/10;
-        }
-    }
-    
-    return res;
-}
+/*----------------------------------------------------------------------------*/
+/*Fonctions sur les vecteurs sur Z/pZ, p=2,3,5 ou 7 */
+/*----------------------------------------------------------------------------*/
 
 int mult_vect_vect(int b1, int b2, int n, int p){
     int i, j, res=0;
@@ -352,6 +315,26 @@ int horner(int f, int a, int p){
     return res;
 }
 
+/*----------------------------------------------------------------------------*/
+/*Fonctions sur les matrices sur Z/pZ, p=2,3,5 ou 7 */
+/*----------------------------------------------------------------------------*/
+
+int mult_mat_vect(int *A, int b, int n, int p){
+    int i, j, Ai, b2, res=0;
+    
+    for(i=0; i<n; i++){
+        Ai=A[i];
+        b2=b;
+        for(j=0; j<n; j++){
+           set(res, addmod(get(res, n-i-1), mulmod((Ai%10), (b2%10), p), p), n-i-1);
+           Ai=Ai/10;
+           b2=b2/10;
+        }
+    }
+    
+    return res;
+}
+
 // évaluation en a de f sur Z/pZ avec p = 2, 3, 5 ou 7
 // avec la méthode de horner
 int horner_mat(int f, int *A, int b, int n, int p){
@@ -368,6 +351,57 @@ int horner_mat(int f, int *A, int b, int n, int p){
     }
     
     return res;
+}
+
+/*----------------------------------------------------------------------------*/
+/*Les 3 algorithmes, dont Wiedemann, sur Z/pZ, p=2,3,5 ou 7 */
+/*----------------------------------------------------------------------------*/
+
+// algo 1 : calcul du polynôme minimal d'une suite 
+// dans un corps Z/pZ, avec p=2, 3, 5 ou 7
+int pol_min(int d, int u, int p){
+    int s, t, s2, t2;
+    int x=0; set(x, 1, 2*d); // x^{2d}
+    int pgcd;
+    int d2, deg_s, deg_t;
+    int i=0, j=0, tmp;
+    
+    // on fait bezout tant que les degrés de t et s ne correspondent pas :
+    bezout_algo1(&t, &s, u, x, p);
+    
+    // on faire le pgcd de t et s pour les diviser et ainsi les rendre premiers entre eux
+    pgcd=bezout(&t2, &s2, t, s, p);
+    
+    t=div_p(t, pgcd, p);
+    //s=div_p(s, pgcd, p); en commentaire, car on a pas besoin de s
+    
+    // on cherche à rendre rev(t) unitaire, 
+    // donc le dernier chiffre différent de 0 doit être égal à 1 : 
+    tmp=t;
+    while((tmp%10)==0){
+        tmp=tmp/10;
+        i++;
+    }
+    tmp=tmp%10;
+    
+    for(j=0 ; j<p ; j++)
+        if(mulmod(j, tmp, p)==1)
+            break;
+    
+    t=mult_p(t, j, p);
+    //s=mult_p(s, j, p); en commentaire, car on a pas besoin de s
+    
+    // on cherche le degré du polynôme minimal : 
+    deg_t=degre(t);
+    deg_s=degre(s);
+    
+    if(deg_s+1>deg_t)
+        d2=deg_s+1;
+    else
+        d2=deg_t;
+    
+    // on renvoie le "reversal" de t
+    return rev(t, d2);
 }
 
 // algo 2 : renvoie la solution de Ay=b : 

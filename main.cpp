@@ -3,9 +3,30 @@
 
 using namespace std;
 
-// a*b modulo m
-int mulmod(int a, int n, int m){
-    return (a*n)% m;
+// (a+b) mod p
+int addmod(int a, int b, int p){
+    return (a+b)%p;
+}
+
+// (a*b) mod p
+int mulmod(int a, int b, int p){
+    return (a*b)%p;
+}
+
+// Affiche un unsigned int en binaire :
+void print_b(unsigned int a){
+    int l=sizeof(unsigned int)*8-1; // position du dernier bit d'un unsigned int
+    
+    while(l!=0 && ((a>>l)&1)==0) l--; // on n'affiche pas les bits à 0 au début
+    
+    // On affiche les bits 1 à 1;
+    while(l!=0){
+        cout << ((a>>l)&1);
+        l--;
+    }
+    cout << (a&1); // on affiche le dernier bit;
+    
+    cout << endl;
 }
 
 // récupère de le coefficient de la puissance 10^i-ème dans a
@@ -38,22 +59,6 @@ int degre(int a){
 }
 
 // renvoie le polynôme "reversal" pour un corps Z/pZ avec p = 2, 3, 5 ou 7
-/*unsigned int rev(unsigned int p, unsigned int d){
-   int r=0;
-   int i, j;
-   int c;
-   
-   for(i=0; i<=d; i++){
-        c=get(p, i);
-        for(j=0; j<p; j++)
-            if(mulmod(c, j, p)==1)
-                set(r, j, i);
-   }
-   
-   return r;
-}*/
-
-// renvoie le polynôme "reversal" pour un corps Z/pZ avec p = 2, 3, 5 ou 7
 int rev(int p, int d){
    int i, r=0;
    
@@ -61,22 +66,6 @@ int rev(int p, int d){
         set(r, get(p, i), d-i);
    
    return r;
-}
-
-// Affiche un unsigned int en binaire :
-void print_b(unsigned int a){
-    int l=sizeof(unsigned int)*8-1; // position du dernier bit d'un unsigned int
-    
-    while(l!=0 && ((a>>l)&1)==0) l--; // on n'affiche pas les bits à 0 au début
-    
-    // On affiche les bits 1 à 1;
-    while(l!=0){
-        cout << ((a>>l)&1);
-        l--;
-    }
-    cout << (a&1); // on affiche le dernier bit;
-    
-    cout << endl;
 }
 
 // renvoie la différence du polynôme a par le polynôme b, dans le corps Z/pZ, avec p= 2, 3, 5 ou 7
@@ -282,17 +271,99 @@ int pol_min(int d, int u, int p){
 // évaluation en a de f sur Z/pZ avec p = 2, 3, 5 ou 7
 // avec la méthode de horner
 int horner(int f, int a, int p){
-    int i, d=degre(f), tmp=0;
+    int i, d=degre(f), res=0;
     
     // pour avoir accès à la puissance la plus haute en premier :
     f=rev(f, d);
     
+    // méthode d'Horner :
     for(i=0 ; i<=d ; i++){
-        tmp=(mulmod(tmp, a, p)+(f%10))%p;
+        res=addmod(mulmod(res, a, p),(f%10),p);
         f=f/10;
     }
     
-    return tmp;
+    return res;
+}
+
+int mult_mat_vect(int *A, int b, int n, int p){
+    int i, j, Ai, b2, res=0;
+    
+    for(i=0; i<n; i++){
+        Ai=A[i];
+        b2=b;
+        for(j=0; j<n; j++){
+           set(res, addmod(get(res, n-i-1), mulmod((Ai%10), (b2%10), p), p), n-i-1);
+           Ai=Ai/10;
+           b2=b2/10;
+        }
+    }
+    
+    return res;
+}
+
+int mult_vect_vect(int b1, int b2, int n, int p){
+    int i, j, res=0;
+    
+    for(i=0; i<n; i++){
+        res+=mulmod(b1%10, b2%10, p);
+        b1=b1/10;
+        b2=b2/10;
+    }
+    
+    return res;
+}
+
+int mult_coeff_vect(int v, int k, int p){
+    int i, d=degre(v), res=0; 
+    
+    for(i=0; i<=d; i++){
+        set(res, mulmod(v%10, k, p), i);
+        v=v/10;
+    }
+    
+    return res;
+}
+
+int add_vect_vect(int v1, int v2, int n, int p){
+    int i, res=0;
+    
+    for(i=0; i<n; i++)
+        set(res, addmod(get(v1, i), get(v2, i), p), i);
+    
+    return res;
+}
+
+// le réécrire avec horner si possible : 
+int eval_pol_at_matrice(int f, int *A, int b, int n, int p){
+    int i=0, d=degre(f), res=0;
+    for(i=0; i<=d; i++){
+        res=add_vect_vect(res, mult_coeff_vect(b, (f%10), p), n, p); // mul vect
+        f=f/10;
+        b=mult_mat_vect(A, b, n, p);
+    }
+    
+    return res;
+}
+
+// algo 2 : renvoie la solution de Ay=b : 
+int pol_min_matrice(int *A, int n, int b, int p){
+    int i, u=100, n2, seq=0, m=1, j=0, b2=b; // mettre un u random
+    if (b==0)
+        return 1;
+    else{
+        do{
+            n2=2*n;
+            b2=b;
+            for(i=0; i<n2; i++){
+                set(seq, mult_vect_vect(u, b2, n, p), i); // vérifer que la seq est dans le bon ordre
+                b2=mult_mat_vect(A, b2, n, p);
+            }
+            m=pol_min(n, seq, p);
+            //cout << "m=" << m << endl;
+            u=120; // mettre un u random
+        }while(eval_pol_at_matrice(m, A, b, n, p)!=0 && j++<10);
+        return m;
+    }
 }
 
 int main(int argc, char** argv) {
@@ -320,6 +391,17 @@ int main(int argc, char** argv) {
     //cout << horner(2000511, 1, 7) << endl;
     //cout << horner(2000511, 2, 7) << endl;
     
+    int A[3]={144, 403, 124};
+    int b=312;
+    int b2=33;
+    int b3=443;
+    
+    //cout << "res mat fois vect : " << mult_mat_vect(A, b, 3, 5) << endl;
+    //cout << "res mat fois mat : " << mult_mat_mat(A, A, 3, 5) << endl;
+    //cout << "res : " << mult_mat_vect(A, b2, 3, 5) << endl;
+    //cout << "res : " << mult_mat_vect(A, b3, 3, 5) << endl;
+    
+    cout << "Polynôme minimal : " << pol_min_matrice(A, 3, b, 5) << endl; 
     return 0;
 }
 

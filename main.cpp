@@ -97,7 +97,7 @@ void print_poly (Poly *p){
     }    
 }
 
-Poly creer_poly(unsigned int *t, int corps, int degre){
+Poly creer_poly(unsigned int *t, int degre, int corps){
     int i=0, j=0;
     unsigned int blocs;
     Poly p;
@@ -143,9 +143,10 @@ Poly creer_poly(unsigned int *t, int corps, int degre){
 int main(int argc, char** argv) {
     Poly p;
     
-    unsigned int t[]={2, 4, 3}, t2[]={3}, t3[]={0, 2, 4, 2, 0, 1};
+    unsigned int t[]={2, 4, 3}, t2[]={3}, t3[]={0, 2, 4, 2, 0, 1}
+    , t4[]={2, 3, 4, 1 ,0 , 0 , 1, 0, 4, 7, 5, 8, 6, 3, 6, 7, 12, 8, 3, 4, 4, 1};
     
-    p=creer_poly(t3, 5, 5);
+    p=creer_poly(t4, 21, 23);
     
     print_poly(&p);
     return 0;

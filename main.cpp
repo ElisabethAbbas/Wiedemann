@@ -194,46 +194,68 @@ Poly rev(Poly p){
 // ------------------------------------------------------------------//
 
 int main(int argc, char** argv) {
-    Poly p, p1, p2, p3, p4, p5, p6;
+    Poly p, pp, p2, p3, p4, p5, p6, p7, p8, p9;
     
-    unsigned int t[]={2, 4, 3};
-    unsigned int t2[]={3};
-    unsigned int t4[]={2, 3, 4, 1 ,0 , 0 , 1, 0, 4, 7, 5, 8, 6, 3, 6, 7, 12, 8, 3, 4, 4, 1};
-    unsigned int t5[]={1, 4, 6};
-
+    unsigned int tt[]={3};
+    pp=creer_poly(tt, 0, 4);
     
-    p=creer_poly(t4, 21, 23);
-    p1=creer_poly(t, 2, 7);
-    p2=creer_poly(t5, 2, 7);
-    p3=diff_poly(&p1, &p2);
     
-
+    // TEST DE REV_P
+    unsigned int t[]={2,3,4,1,0,0,1,0,4,7,5,8,6,3,6,7,12,8,3,4,4,1};
+    p=creer_poly(t, 21, 23);
     cout << "P(x) = ";
     print_poly(&p);
     Poly rev_p = rev(p);
-    cout << endl << "Polynôme réciproque de P : "<< endl;
-    print_poly(&rev_p);    
-    
+    cout << "revP(x) = ";
+    print_poly(&rev_p);
     cout << endl;
     
-    cout << "Le troisième polynôme est le résultat de la différence des deux premiers (corps Z/7Z) :" << endl;
-    print_poly(&p1);
+    // TESTS DE DIFF_P
+    unsigned int t2[]={2,4,3};
+    p2=creer_poly(t2,2,7);
+    unsigned int t3[]={1,4,6};
+    p3=creer_poly(t3,2,7);
+    p4=diff_poly(&p2, &p3);
+    cout << "DIFFERENCE DANS Z/7Z :" << endl;
     print_poly(&p2);
+    cout << "-" << endl;
     print_poly(&p3);
-    
-    
-    // TEST ADDITION:
-    unsigned int t3[]={1,2,4,2,0,1};
-    unsigned int t6[]={1,3,4,1,0,2,1,1,3};
-    p4=creer_poly(t3, 5, 5);
-    p5=creer_poly(t6, 8, 5);
-    p6=add_poly(&p4, &p5);
-    cout << endl << "ADDITION DANS Z/5Z : " << endl;
+    cout << "=" << endl;
     print_poly(&p4);
-    cout << "+ " << endl;
+    cout << endl;
+    
+    unsigned int t5[]={1,1,4,2,0,1};
+    unsigned int t6[]={1,3,4,1,0,2,1,1,3};
+    p5=creer_poly(t5, 5, 5);
+    p6=creer_poly(t6, 8, 5);
+    p7=diff_poly(&p5, &p6);
+    cout << "DIFFERENCE DANS Z/5Z :" << endl;
     print_poly(&p5);
-    cout << "= " << endl;
+    cout << "-" << endl;
     print_poly(&p6);
+    cout << "= " << endl;
+    print_poly(&p7);
+    cout << endl;
+    
+    
+    // TESTS DE ADD_P
+    
+    cout << "ADDITION DANS Z/7Z :" << endl;
+    p8=add_poly(&p2, &p3);
+    print_poly(&p2);
+    cout << "-" << endl;
+    print_poly(&p3);
+    cout << "=" << endl;
+    print_poly(&p8);
+    cout << endl;
+    
+    cout << "ADDITION DANS Z/5Z : " << endl;
+    p9 = add_poly(&p5, &p6);
+    print_poly(&p5);
+    cout << "+ " << endl;
+    print_poly(&p6);
+    cout << "= " << endl;
+    print_poly(&p9);
     cout << endl;
     
     return 0;

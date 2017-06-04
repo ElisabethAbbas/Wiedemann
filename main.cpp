@@ -149,14 +149,38 @@ Poly creer_poly(unsigned int *t, int degre, int corps){
 // il faut que les deux polynômes aient des coefficients dans le même corps
 Poly diff_poly(Poly *a, Poly *b){
     Poly res;
-    unsigned int t[3]={0, 0, 0};
+    
+    // degré de res
+    unsigned int d=max(a->degre, b->degre);
+    
+    // tableau de coefficients nuls
+    unsigned int *t=(unsigned int*)malloc(max(a->taille, b->taille)); 
+    unsigned int blocs = max(a->blocs, b->blocs);
     int i;
+    for(i=0; i<=blocs; i++)
+        t[i]=0;
     
-    res=creer_poly(t, max(a->degre, b->degre), a->corps);
+    res=creer_poly(t, d, a->corps);
     
-    for(i=0; i<=res.degre; i++){
-        set(&res, i, (get(a, i)+res.corps-get(b, i))%res.corps); 
+    res.corps=a->corps;
+    res.degre=d;
+    
+    for(i=res.degre; i>=0; i--)
+        set(&res, i, ((get(a, i)+res.corps-get(b, i))%res.corps)); 
+    
+    res.coefficients_par_case=a->coefficients_par_case;
+    res.taille_bloc=a->taille_bloc;
+    
+    // on met à jour res :
+    unsigned int k=0;
+    while(res.degre>=0 && get(&res, res.degre)==0){
+        res.degre--;
+        k++;
     }
+    res.blocs=blocs-k/res.taille_bloc;
+    res.taille=8*sizeof(unsigned int);
+            
+    res.p=(unsigned int*)realloc(res.p, res.taille);
     
     return res;
 }

@@ -68,15 +68,15 @@ void print_poly (Poly *p){
     
     /* on affiche le coefficient pour le degré 0 :*/
     // s'il existe et si le coefficient n'est pas 0
-    if((j++)<=p->degre && (a=get(p,0))){ // on récupère le coefficient dans a
+    if((j++)<=p->degre && (a=(get(p,0)))){ // on récupère le coefficient dans a
         cout << a;
     }
     
     /* on affiche le coefficient pour le degré 1 :*/
     if((j++)<=p->degre){
         if(a)
-            cout << "+";
-        if(a=get(p,1)){ // on récupère le coefficient dans a et on vérifie qu'il n'est pas nul
+            cout << " + ";
+        if(a=(get(p,1))){ // on récupère le coefficient dans a et on vérifie qu'il n'est pas nul
             if (a!=1) // s'il n'est pas égal à 1 on l'affiche
                 cout << a;
             cout << "X";
@@ -86,15 +86,17 @@ void print_poly (Poly *p){
     /* on affiche le reste des coefficients :*/
     while(j<=p->degre){
         if(a)
-            cout << "+";
-        if(a=get(p,j)){
+            cout << " + ";
+        if(a=(get(p,j))){
             if(a!=1)
                 cout << a;
             cout << "X^" << j;
         }
         
         j++;
-    }    
+    }
+    
+    cout << endl;
 }
 
 Poly creer_poly(unsigned int *t, int degre, int corps){
@@ -140,6 +142,22 @@ Poly creer_poly(unsigned int *t, int degre, int corps){
     
 }
 
+// Trouver le polynôme réciproque revP(x) = x^d P(1/x)
+Poly rev(Poly p){
+    unsigned int t[p.degre];
+    for (int i = 0; i<=(p.degre); i++) {
+        int a = get(&p,i);
+        t[(p.degre)-i]=a;
+    }
+    Poly rev_p = creer_poly(t, p.degre, p.corps);
+    return rev_p;
+}
+
+// ------------------------------------------------------------------//
+//                                 MAIN
+// ------------------------------------------------------------------//
+
+
 int main(int argc, char** argv) {
     Poly p;
     
@@ -147,8 +165,14 @@ int main(int argc, char** argv) {
     , t4[]={2, 3, 4, 1 ,0 , 0 , 1, 0, 4, 7, 5, 8, 6, 3, 6, 7, 12, 8, 3, 4, 4, 1};
     
     p=creer_poly(t4, 21, 23);
-    
+    cout << "P(x) = ";
     print_poly(&p);
+    
+    Poly rev_p = rev(p);
+    cout << endl << "Polynôme réciproque de P : "<< endl;
+    print_poly(&rev_p);
+    
+    
     return 0;
 }
 

@@ -68,7 +68,7 @@ void print_poly (Poly *p){
     
     /* on affiche le coefficient pour le degré 0 :*/
     // s'il existe et si le coefficient n'est pas 0
-    if((j++)<=p->degre && (a=get(p,0))){ 
+    if((j++)<=p->degre && (a=get(p,0))){ // on récupère le coefficient dans a
         cout << a;
     }
     
@@ -76,8 +76,8 @@ void print_poly (Poly *p){
     if((j++)<=p->degre){
         if(a)
             cout << "+";
-        if(a=get(p,1)){
-            if (a!=1)
+        if(a=get(p,1)){ // on récupère le coefficient dans a et on vérifie qu'il n'est pas nul
+            if (a!=1) // s'il n'est pas égal à 1 on l'affiche
                 cout << a;
             cout << "X";
         }

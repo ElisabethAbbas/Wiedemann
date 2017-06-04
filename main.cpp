@@ -161,6 +161,22 @@ Poly diff_poly(Poly *a, Poly *b){
     return res;
 }
 
+// Renvoie l'addition de deux polynômes à valeurs dans le même corps
+Poly add_poly(Poly *a, Poly *b){
+    Poly res;
+    int d = max(a->degre, b->degre);
+    unsigned int t[d+1];
+    for (int i = 0; i<=d+1; i++) {
+        t[i] = 0;
+    }
+    res = creer_poly(t, d, a->corps);
+    
+    for (int i = 0; i <=(res.degre); i++) {
+        set(&res, i, (get(a,i)+get(b,i))%(res.corps));
+    }
+    return res;
+}
+
 // Trouver le polynôme réciproque revP(x) = x^d P(1/x)
 Poly rev(Poly p){
     unsigned int t[p.degre];
@@ -178,18 +194,19 @@ Poly rev(Poly p){
 // ------------------------------------------------------------------//
 
 int main(int argc, char** argv) {
-    Poly p, p1, p2, p3, p4;
+    Poly p, p1, p2, p3, p4, p5, p6;
     
     unsigned int t[]={2, 4, 3};
     unsigned int t2[]={3};
-    unsigned int t3[]={0, 2, 4, 2, 0, 1};
     unsigned int t4[]={2, 3, 4, 1 ,0 , 0 , 1, 0, 4, 7, 5, 8, 6, 3, 6, 7, 12, 8, 3, 4, 4, 1};
     unsigned int t5[]={1, 4, 6};
+
     
     p=creer_poly(t4, 21, 23);
     p1=creer_poly(t, 2, 7);
     p2=creer_poly(t5, 2, 7);
     p3=diff_poly(&p1, &p2);
+    
 
     cout << "P(x) = ";
     print_poly(&p);
@@ -203,6 +220,21 @@ int main(int argc, char** argv) {
     print_poly(&p1);
     print_poly(&p2);
     print_poly(&p3);
+    
+    
+    // TEST ADDITION:
+    unsigned int t3[]={1,2,4,2,0,1};
+    unsigned int t6[]={1,3,4,1,0,2,1,1,3};
+    p4=creer_poly(t3, 5, 5);
+    p5=creer_poly(t6, 8, 5);
+    p6=add_poly(&p4, &p5);
+    cout << endl << "ADDITION DANS Z/5Z : " << endl;
+    print_poly(&p4);
+    cout << "+ " << endl;
+    print_poly(&p5);
+    cout << "= " << endl;
+    print_poly(&p6);
+    cout << endl;
     
     return 0;
 }

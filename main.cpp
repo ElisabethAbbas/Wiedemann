@@ -11,6 +11,7 @@ struct Poly {
         unsigned int taille; // nombre de bits de p;
         unsigned int taille_bloc; // nombre de bits pour un coefficient
         unsigned coefficients_par_case; // nombre de coefficients par case
+        unsigned int blocs; // nombre de blocs au total
 };
 
 /*--------------------------------------------------------------------*/
@@ -18,7 +19,7 @@ struct Poly {
 /*--------------------------------------------------------------------*/
 
 
-// récupère de le coefficient de la puissance 10^i-ème dans le polynôme a
+// renvoie le coefficient de X^i dans le polynôme a
 int get(Poly *p, unsigned int i){
     // masque permemttant de récupérer le coefficient :
     unsigned int masque=0;
@@ -42,6 +43,7 @@ int get(Poly *p, unsigned int i){
     return (bloc>>((i*p->taille_bloc)%(p->coefficients_par_case*p->taille_bloc)))&masque;
 }
 
+// modifie le coefficient de X^i dans le polynôme *p par a
 int set(Poly *p, unsigned int i, unsigned int a){
     int j=0;
     int b, num_bit;
@@ -62,13 +64,13 @@ int set(Poly *p, unsigned int i, unsigned int a){
     }    
 }
 
-// ça va pas : 
+// affiche le polynôme *p
 void print_poly (Poly *p){
     int j=0, a;
     
     /* on affiche le coefficient pour le degré 0 :*/
     // s'il existe et si le coefficient n'est pas 0
-    if((j++)<=p->degre && (a=(get(p,0)))){ // on récupère le coefficient dans a
+    if((j++)<=p->degre && (a=(get(p,0)))){  // on récupère le coefficient dans a
         cout << a;
     }
     
@@ -94,14 +96,15 @@ void print_poly (Poly *p){
         }
         
         j++;
-    }
+    }    
     
     cout << endl;
 }
 
+/* crée et renvoie le polynôme p via le tableau de coefficients "t", 
+ * de degré "degre" et sur le corps "corps". */
 Poly creer_poly(unsigned int *t, int degre, int corps){
     int i=0, j=0;
-    unsigned int blocs;
     Poly p;
     p.corps=corps;
     p.degre=degre;
@@ -113,10 +116,10 @@ Poly creer_poly(unsigned int *t, int degre, int corps){
     // Le nombre de coefficient qu'on peut mettre par case du tableau :
     p.coefficients_par_case = (sizeof(unsigned int))*8/p.taille_bloc;
     
-    blocs=degre/p.coefficients_par_case;
+    p.blocs=degre/p.coefficients_par_case;
     
     // Le nombre de bits :
-    p.taille=blocs*sizeof(unsigned int)*8;
+    p.taille=p.blocs*sizeof(unsigned int)*8;
     
     
     //On remplit le tableau avec les coefficients du polynôme (bit-packing) :
@@ -142,6 +145,22 @@ Poly creer_poly(unsigned int *t, int degre, int corps){
     
 }
 
+// renvoie la différence du polynôme a par le polynôme b, 
+// il faut que les deux polynômes aient des coefficients dans le même corps
+Poly diff_poly(Poly *a, Poly *b){
+    Poly res;
+    unsigned int t[3]={0, 0, 0};
+    int i;
+    
+    res=creer_poly(t, max(a->degre, b->degre), a->corps);
+    
+    for(i=0; i<=res.degre; i++){
+        set(&res, i, (get(a, i)+res.corps-get(b, i))%res.corps); 
+    }
+    
+    return res;
+}
+
 // Trouver le polynôme réciproque revP(x) = x^d P(1/x)
 Poly rev(Poly p){
     unsigned int t[p.degre];
@@ -153,25 +172,37 @@ Poly rev(Poly p){
     return rev_p;
 }
 
+
 // ------------------------------------------------------------------//
 //                                 MAIN
 // ------------------------------------------------------------------//
 
-
 int main(int argc, char** argv) {
-    Poly p;
+    Poly p, p1, p2, p3, p4;
     
-    unsigned int t[]={2, 4, 3}, t2[]={3}, t3[]={0, 2, 4, 2, 0, 1}
-    , t4[]={2, 3, 4, 1 ,0 , 0 , 1, 0, 4, 7, 5, 8, 6, 3, 6, 7, 12, 8, 3, 4, 4, 1};
+    unsigned int t[]={2, 4, 3};
+    unsigned int t2[]={3};
+    unsigned int t3[]={0, 2, 4, 2, 0, 1};
+    unsigned int t4[]={2, 3, 4, 1 ,0 , 0 , 1, 0, 4, 7, 5, 8, 6, 3, 6, 7, 12, 8, 3, 4, 4, 1};
+    unsigned int t5[]={1, 4, 6};
     
     p=creer_poly(t4, 21, 23);
+    p1=creer_poly(t, 2, 7);
+    p2=creer_poly(t5, 2, 7);
+    p3=diff_poly(&p1, &p2);
+
     cout << "P(x) = ";
     print_poly(&p);
-    
     Poly rev_p = rev(p);
     cout << endl << "Polynôme réciproque de P : "<< endl;
-    print_poly(&rev_p);
+    print_poly(&rev_p);    
     
+    cout << endl;
+    
+    cout << "Le troisième polynôme est le résultat de la différence des deux premiers (corps Z/7Z) :" << endl;
+    print_poly(&p1);
+    print_poly(&p2);
+    print_poly(&p3);
     
     return 0;
 }

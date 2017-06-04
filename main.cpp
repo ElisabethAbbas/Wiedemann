@@ -188,16 +188,92 @@ Poly diff_poly(Poly *a, Poly *b){
 // Renvoie l'addition de deux polynômes à valeurs dans le même corps
 Poly add_poly(Poly *a, Poly *b){
     Poly res;
-    int d = max(a->degre, b->degre);
-    unsigned int t[d+1];
-    for (int i = 0; i<=d+1; i++) {
-        t[i] = 0;
-    }
-    res = creer_poly(t, d, a->corps);
     
-    for (int i = 0; i <=(res.degre); i++) {
-        set(&res, i, (get(a,i)+get(b,i))%(res.corps));
+    // degré de res
+    unsigned int d=max(a->degre, b->degre);
+    
+    // tableau de coefficients nuls
+    unsigned int *t=(unsigned int*)malloc(max(a->taille, b->taille));
+    unsigned int blocs = max(a->blocs, b->blocs);
+    int i;
+    for(i=0; i<=blocs; i++)
+        t[i]=0;
+    
+    res=creer_poly(t, d, a->corps);
+    
+    res.corps=a->corps;
+    res.degre=d;
+    
+    for(i=res.degre; i>=0; i--)
+        set(&res, i, ((get(a, i)+get(b, i))%res.corps));
+    
+    res.coefficients_par_case=a->coefficients_par_case;
+    res.taille_bloc=a->taille_bloc;
+    
+    // on met à jour res :
+    unsigned int k=0;
+    while(res.degre>=0 && get(&res, res.degre)==0){
+        res.degre--;
+        k++;
     }
+    res.blocs=blocs-k/res.taille_bloc;
+    res.taille=8*sizeof(unsigned int);
+    
+    res.p=(unsigned int*)realloc(res.p, res.taille);
+    
+    return res;
+}
+
+
+
+//Multiplication de deux polynômes à coefficients dans le même corps
+Poly mult_poly(Poly *a, Poly *b){
+    Poly res;
+    
+    // degré de res
+    unsigned int d=(a->degre)*(b->degre);
+    
+    // tableau de coefficients nuls
+    unsigned int *t=(unsigned int*)malloc((a->taille)*(b->taille));
+    unsigned int blocs = (a->blocs)*(b->blocs);
+    int i;
+    for(i=0; i<=blocs; i++){
+        t[i]=0;
+    }
+    
+    res=creer_poly(t, d, a->corps);
+    
+    res.corps=a->corps;
+    res.degre=d;
+    
+    //set(&res, d, (get(a, a->degre)+1)*(get(b, (b->degre))+1)); // coeff de plus haut degré
+    for(int i=0; i<=a->degre; i++){
+        
+        for (int j=0; j<=b->degre; j++) {
+            int r = get(&res, i+j); // valeur du coeff à la puissance 1O^{i+j}
+            if (r==0) {
+                set(&res, i+j, (get(a, i)*get(b, j))%res.corps);
+            }
+            else {
+                set(&res, i+j, (r+ get(a, i)*get(b, j))%res.corps);
+            }
+        }
+    }
+    
+    res.coefficients_par_case=a->coefficients_par_case;
+    res.taille_bloc=a->taille_bloc;
+    
+    // on met à jour res :
+    unsigned int k=0;
+    while(res.degre>=0 && get(&res, res.degre)==0){
+        res.degre--;
+        k++;
+    }
+    res.blocs=blocs-k/res.taille_bloc;
+    res.taille=8*sizeof(unsigned int);
+    
+    res.p=(unsigned int*)realloc(res.p, res.taille);
+    
     return res;
 }
 
@@ -218,7 +294,7 @@ Poly rev(Poly p){
 // ------------------------------------------------------------------//
 
 int main(int argc, char** argv) {
-    Poly p, pp, p2, p3, p4, p5, p6, p7, p8, p9;
+    Poly p, pp, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13;
     
     unsigned int tt[]={3};
     pp=creer_poly(tt, 0, 4);
@@ -280,6 +356,30 @@ int main(int argc, char** argv) {
     print_poly(&p6);
     cout << "= " << endl;
     print_poly(&p9);
+    cout << endl;
+    
+    // TEST MULTIPLICATION
+    cout << "MULTIPLICATION DANS Z/7Z : "<<endl;
+    p10 = mult_poly(&p2, &p3);
+    print_poly(&p2);
+    cout << "x" << endl;
+    print_poly(&p3);
+    cout << "=" << endl;
+    print_poly(&p10);
+    cout << endl;
+    
+    
+    unsigned int t11[]={1,4,1};
+    unsigned int t12[]={1,1};
+    p11=creer_poly(t11, 2, 11);
+    p12=creer_poly(t12, 1, 11);
+    p13=mult_poly(&p11, &p12);
+    cout << "MULTIPLICATION DANS Z/11Z : "<<endl;
+    print_poly(&p11);
+    cout << "x" << endl;
+    print_poly(&p12);
+    cout << "=" << endl;
+    print_poly(&p13);
     cout << endl;
     
     return 0;

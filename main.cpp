@@ -564,6 +564,14 @@ int main(int argc, char** argv) {
     cout << endl;
     
     /*
+    // TEST ALGO 1:
+    unsigned int u[] = {3,0,4,2,3,0};
+    U = creer_poly(u, 5, 5);
+    p = pol_min(3, U);
+    print_poly(&p);
+    */
+    
+    /*
     // TESTS DE DIFF_P
     unsigned int t2[]={2,4,3};
     p2=creer_poly(t2,2,7);

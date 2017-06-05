@@ -4,20 +4,123 @@
 
 using namespace std;
 
+
 struct Poly {
 	unsigned int* p; // contient les coefficients de p
         unsigned int corps; // corps du polynôme p
         unsigned int degre; // degré du polynôme p
-        unsigned int taille; // nombre de bits de p;
-        unsigned int taille_bloc; // nombre de bits pour un coefficient
+        unsigned int taille; // nombre de cases
+        unsigned int bits; // nombre de bits de p;
+        unsigned int taille_coefficient; // nombre de bits pour un coefficient
         unsigned coefficients_par_case; // nombre de coefficients par case
-        unsigned int blocs; // nombre de blocs au total
 };
+int get(Poly *p, unsigned int i);
+int set(Poly *p, unsigned int i, unsigned int a);
+Poly creer_poly_nul(int corps);
+Poly creer_poly(unsigned int *t, int degre, int corps);
+Poly copie_poly(Poly *p);
+void print_poly (Poly *p);
+void print_details_poly(Poly* p);
+Poly rev(Poly p);
+Poly add_poly(Poly *a, Poly *b);
+Poly diff_poly(Poly *a, Poly *b);
+Poly mult_poly(Poly *a, Poly *b);
+Poly div_poly(Poly *a, Poly *b , Poly* r);
 
 /*--------------------------------------------------------------------*/
 /*Fonctions sur les polynômes*/
 /*--------------------------------------------------------------------*/
 
+/* crée et renvoie le polynôme p via le tableau de coefficients "t", 
+ * de degré "degre" et sur le corps "corps". */
+Poly creer_poly_nul(int corps){
+    int b=0, j=0;
+    Poly p;
+    p.corps=corps;
+    p.degre=0;
+    
+    /* On arrondit au-dessus pour trouver le nombre nécessaire
+     * de bits pour un coefficient :*/
+    p.taille_coefficient=ceil(log2(corps)); 
+    
+    // Le nombre de coefficient qu'on peut mettre par case du tableau :
+    p.coefficients_par_case = (sizeof(unsigned int))*8/p.taille_coefficient;
+    
+    p.taille=((p.degre+1)/p.coefficients_par_case)+1;
+    
+    // Le nombre de bits :
+    p.bits=p.taille*sizeof(unsigned int)*8;
+    
+    //On remplit le tableau avec des 0 :
+    p.p = (unsigned int*)malloc(p.bits);
+    
+    for(b=0; b<p.taille; b++)
+        p.p[b]=0;
+        
+    return p;
+}
+
+/* crée et renvoie le polynôme p via le tableau de coefficients "t", 
+ * de degré "degre" et sur le corps "corps". */
+Poly creer_poly(unsigned int *t, int degre, int corps){
+    int i=0, j=0;
+    Poly p;
+    p.corps=corps;
+    p.degre=degre;
+    
+    /* On arrondit au-dessus pour trouver le nombre nécessaire
+     * de bits pour un coefficient :*/
+    p.taille_coefficient=ceil(log2(corps)); 
+    
+    // Le nombre de coefficient qu'on peut mettre par case du tableau :
+    p.coefficients_par_case = (sizeof(unsigned int))*8/p.taille_coefficient;
+    
+    p.taille=((p.degre+1)/p.coefficients_par_case)+1;
+    
+    // Le nombre de bits :
+    p.bits=p.taille*sizeof(unsigned int)*8;
+    
+    
+    //On remplit le tableau avec les coefficients du polynôme (bit-packing) :
+    
+    p.p = (unsigned int*)malloc(p.bits);
+   
+    int b=0; // numéro du bloc en cours
+    
+    p.p[0]=0;
+    for(i=0; i<=degre; i++){
+        
+        // si on a remplit un bloc :
+        if(j==p.coefficients_par_case){
+            j=0; // on repart à 0
+            b++; // on passe au bloc suivant
+            p.p[b]=0;
+        }
+        set(&p, i, t[i]);
+        j++;
+    }
+    
+    return p;
+    
+}
+
+Poly copie_poly(Poly *p){
+    int b=0, j=0;
+    Poly res;
+    res.corps=p->corps;
+    res.degre=p->degre;
+    res.taille_coefficient=p->taille_coefficient; 
+    res.coefficients_par_case=p->coefficients_par_case;
+    res.bits=p->bits;
+    res.taille=p->taille;
+    
+    res.p = (unsigned int*)malloc(p->bits);
+    
+    for(b=0; b<p->taille; b++)
+        res.p[b]=p->p[b];
+        
+    return res;
+}
 
 // renvoie le coefficient de X^i dans le polynôme a
 int get(Poly *p, unsigned int i){
@@ -31,7 +134,7 @@ int get(Poly *p, unsigned int i){
     do{
         masque<<=1;
         masque|=1;
-    }while((++j)<p->taille_bloc);
+    }while((++j)<p->taille_coefficient);
     
     // numéro du bloc où se trouve le coefficient cherché :
     int num_bloc=i/p->coefficients_par_case;
@@ -40,20 +143,42 @@ int get(Poly *p, unsigned int i){
     unsigned int bloc=p->p[num_bloc];
     
     // on renvoie le coefficient : 
-    return (bloc>>((i*p->taille_bloc)%(p->coefficients_par_case*p->taille_bloc)))&masque;
+    return (bloc>>((i*p->taille_coefficient)%(p->coefficients_par_case*p->taille_coefficient)))&masque;
 }
 
 // modifie le coefficient de X^i dans le polynôme *p par a
 int set(Poly *p, unsigned int i, unsigned int a){
     int j=0;
     int b, num_bit;
+    unsigned int k;
+    
     
     int num_bloc=i/p->coefficients_par_case;
     int num_coeff=i-num_bloc*p->coefficients_par_case;
     
-    num_bit=num_coeff*p->taille_bloc;
+    num_bit=num_coeff*p->taille_coefficient;
     
-    while(j<p->taille_bloc){
+    /*mise à jour de la structure*/
+    if((i>p->degre) && a!=0){
+        p->degre=i;
+        p->taille=((p->degre+1)/p->coefficients_par_case)+1;
+        p->bits=(p->degre+1)*p->taille_coefficient;
+        p->p=(unsigned int*)realloc(p->p, p->bits);
+    }
+    
+    else if(i<=p->degre && (get(p,p->degre)==0)){
+        k=0;
+        while(p->degre>0 && get(p, p->degre)==0){
+            p->degre--;
+            k++;
+        }
+        p->taille=p->taille-k/p->taille_coefficient;
+        p->bits=p->taille_coefficient*(p->degre+1);
+        p->p=(unsigned int*)realloc(p->p, p->bits);
+    }
+    
+    /* mise à jour du coefficient */
+    while(j<p->taille_coefficient){
         b=(a&1);
         if (b)
             p->p[num_bloc] = p->p[num_bloc] | (1u<<(num_bit+j));
@@ -61,7 +186,7 @@ int set(Poly *p, unsigned int i, unsigned int a){
             p->p[num_bloc]=p->p[num_bloc] & (~(1u<<(num_bit+j)));
         j++;
         a>>=1;
-    }    
+    }   
 }
 
 // affiche le polynôme *p
@@ -101,185 +226,22 @@ void print_poly (Poly *p){
     cout << endl;
 }
 
-/* crée et renvoie le polynôme p via le tableau de coefficients "t", 
- * de degré "degre" et sur le corps "corps". */
-Poly creer_poly(unsigned int *t, int degre, int corps){
-    int i=0, j=0;
-    Poly p;
-    p.corps=corps;
-    p.degre=degre;
-    
-    /* On arrondit au-dessus pour trouver le nombre nécessaire
-     * de bits pour un coefficient :*/
-    p.taille_bloc=ceil(log2(corps)); 
-    
-    // Le nombre de coefficient qu'on peut mettre par case du tableau :
-    p.coefficients_par_case = (sizeof(unsigned int))*8/p.taille_bloc;
-    
-    p.blocs=degre/p.coefficients_par_case;
-    
-    // Le nombre de bits :
-    p.taille=p.blocs*sizeof(unsigned int)*8;
-    
-    
-    //On remplit le tableau avec les coefficients du polynôme (bit-packing) :
-    
-    p.p = (unsigned int*)malloc(p.taille);
-   
-    int b=0; // numéro du bloc en cours
-    
-    p.p[0]=0;
-    for(i=0; i<=degre; i++){
-        
-        // si on a remplit un bloc :
-        if(j==p.coefficients_par_case){
-            j=0; // on repart à 0
-            b++; // on passe au bloc suivant
-            p.p[b]=0;
-        }
-        set(&p, i, t[i]);
-        j++;
-    }
-    
-    return p;
-    
-}
-
-// renvoie la différence du polynôme a par le polynôme b, 
-// il faut que les deux polynômes aient des coefficients dans le même corps
-Poly diff_poly(Poly *a, Poly *b){
-    Poly res;
-    
-    // degré de res
-    unsigned int d=max(a->degre, b->degre);
-    
-    // tableau de coefficients nuls
-    unsigned int *t=(unsigned int*)malloc(max(a->taille, b->taille)); 
-    unsigned int blocs = max(a->blocs, b->blocs);
-    int i;
-    for(i=0; i<=blocs; i++)
-        t[i]=0;
-    
-    res=creer_poly(t, d, a->corps);
-    
-    res.corps=a->corps;
-    res.degre=d;
-    
-    for(i=res.degre; i>=0; i--)
-        set(&res, i, ((get(a, i)+res.corps-get(b, i))%res.corps)); 
-    
-    res.coefficients_par_case=a->coefficients_par_case;
-    res.taille_bloc=a->taille_bloc;
-    
-    // on met à jour res :
-    unsigned int k=0;
-    while(res.degre>=0 && get(&res, res.degre)==0){
-        res.degre--;
-        k++;
-    }
-    res.blocs=blocs-k/res.taille_bloc;
-    res.taille=8*sizeof(unsigned int);
-            
-    res.p=(unsigned int*)realloc(res.p, res.taille);
-    
-    return res;
-}
-
-// Renvoie l'addition de deux polynômes à valeurs dans le même corps
-Poly add_poly(Poly *a, Poly *b){
-    Poly res;
-    
-    // degré de res
-    unsigned int d=max(a->degre, b->degre);
-    
-    // tableau de coefficients nuls
-    unsigned int *t=(unsigned int*)malloc(max(a->taille, b->taille));
-    unsigned int blocs = max(a->blocs, b->blocs);
-    int i;
-    for(i=0; i<=blocs; i++)
-        t[i]=0;
-    
-    res=creer_poly(t, d, a->corps);
-    
-    res.corps=a->corps;
-    res.degre=d;
-    
-    for(i=res.degre; i>=0; i--)
-        set(&res, i, ((get(a, i)+get(b, i))%res.corps));
-    
-    res.coefficients_par_case=a->coefficients_par_case;
-    res.taille_bloc=a->taille_bloc;
-    
-    // on met à jour res :
-    unsigned int k=0;
-    while(res.degre>=0 && get(&res, res.degre)==0){
-        res.degre--;
-        k++;
-    }
-    res.blocs=blocs-k/res.taille_bloc;
-    res.taille=8*sizeof(unsigned int);
-    
-    res.p=(unsigned int*)realloc(res.p, res.taille);
-    
-    return res;
-}
-
-
-
-//Multiplication de deux polynômes à coefficients dans le même corps
-Poly mult_poly(Poly *a, Poly *b){
-    Poly res;
-    
-    // degré de res
-    unsigned int d=(a->degre)*(b->degre);
-    
-    // tableau de coefficients nuls
-    unsigned int *t=(unsigned int*)malloc((a->taille)*(b->taille));
-    unsigned int blocs = (a->blocs)*(b->blocs);
-    int i;
-    for(i=0; i<=blocs; i++){
-        t[i]=0;
-    }
-    
-    res=creer_poly(t, d, a->corps);
-    
-    res.corps=a->corps;
-    res.degre=d;
-    
-    //set(&res, d, (get(a, a->degre)+1)*(get(b, (b->degre))+1)); // coeff de plus haut degré
-    for(int i=0; i<=a->degre; i++){
-        
-        for (int j=0; j<=b->degre; j++) {
-            int r = get(&res, i+j); // valeur du coeff à la puissance 1O^{i+j}
-            if (r==0) {
-                set(&res, i+j, (get(a, i)*get(b, j))%res.corps);
-            }
-            else {
-                set(&res, i+j, (r+ get(a, i)*get(b, j))%res.corps);
-            }
-        }
-    }
-    
-    res.coefficients_par_case=a->coefficients_par_case;
-    res.taille_bloc=a->taille_bloc;
-    
-    // on met à jour res :
-    unsigned int k=0;
-    while(res.degre>=0 && get(&res, res.degre)==0){
-        res.degre--;
-        k++;
-    }
-    res.blocs=blocs-k/res.taille_bloc;
-    res.taille=8*sizeof(unsigned int);
-    
-    res.p=(unsigned int*)realloc(res.p, res.taille);
-    
-    return res;
+void print_details_poly(Poly* p){
+    cout << "Nombre de bits : " << p->bits << endl;
+    cout << "Nombre de coefficients par case : ";
+    cout << p->coefficients_par_case << endl;
+    cout << "Corps : " << p->corps << endl;
+    cout << "Degré : " << p->degre << endl;
+    cout << "Taille : " << p->taille << endl;
+    cout << "Nombre de bits d'un coefficient : "; 
+    cout << p->taille_coefficient << endl;
+    print_poly(p);
+    cout << endl;
 }
 
 // Trouver le polynôme réciproque revP(x) = x^d P(1/x)
 Poly rev(Poly p){
-    unsigned int t[p.degre];
+    unsigned int t[p.degre+1];
     for (int i = 0; i<=(p.degre); i++) {
         int a = get(&p,i);
         t[(p.degre)-i]=a;
@@ -288,6 +250,139 @@ Poly rev(Poly p){
     return rev_p;
 }
 
+// Renvoie l'addition de deux polynômes à valeurs dans le même corps
+Poly add_poly(Poly *a, Poly *b){
+    Poly res;
+    int i=0;
+    
+    // degré à partir duquel il faut commencer la boucle
+    unsigned int d=max(a->degre, b->degre);
+    
+    res=creer_poly_nul(a->corps);
+    for(i=d; i>=0; i--)
+        set(&res, i, ((get(a, i)+get(b, i))%res.corps));
+    
+    return res;
+}
+
+// renvoie la différence du polynôme a par le polynôme b, 
+// il faut que les deux polynômes aient des coefficients dans le même corps
+Poly diff_poly(Poly *a, Poly *b){
+    Poly res;
+    int i=0;
+    
+    // degré à parti duquel il faut commencer la boucle
+    unsigned int d=max(a->degre, b->degre);
+    
+    // tableau de coefficients nuls
+    //unsigned int taille = max(a->taille, b->taille);
+
+    res=creer_poly_nul(a->corps);
+    
+    //res.corps=a->corps;
+    //res.degre=d;
+    
+    for(i=d; i>=0; i--)
+        set(&res, i, ((get(a, i)+res.corps-get(b, i))%res.corps)); 
+        
+    /*res.coefficients_par_case=a->coefficients_par_case;
+    res.taille_coefficient=a->taille_coefficient;
+    
+    // on met à jour res :
+    unsigned int k=0;
+    while(res.degre>0 && get(&res, res.degre)==0){
+        res.degre--;
+        k++;
+    }
+    res.taille=taille-k/res.taille_coefficient;
+    res.bits=res.taille_coefficient*(res.degre+1);
+            
+    res.p=(unsigned int*)realloc(res.p, res.bits);
+    */
+    return res;
+}
+
+Poly mult_poly(Poly *a, Poly *b){
+    Poly res;
+    int r=0;
+    int i,j;
+    
+    // degré de res
+    unsigned int d=(a->degre)*(b->degre);
+
+    // tableau de coefficients nuls
+    unsigned int taille = (a->taille)*(b->taille);
+    
+    res=creer_poly_nul(a->corps);
+    
+    res.corps=a->corps;
+    res.degre=d;
+
+    //set(&res, d, (get(a, a->degre)+1)*(get(b, (b->degre))+1)); // coeff de plus haut degré
+    for(i=0; i<=a->degre; i++){
+         for (j=0; j<=b->degre; j++) {
+            r = get(&res, i+j); // valeur du coeff à la puissance 1O^{i+j}
+            set(&res, i+j, (r+ get(a, i)*get(b, j))%res.corps);
+        }
+    }
+    
+    res.coefficients_par_case=a->coefficients_par_case;
+    res.taille_coefficient=a->taille_coefficient;
+
+    // on met à jour res :
+    unsigned int k=0;
+    while(res.degre>0 && get(&res, res.degre)==0){
+        res.degre--;
+        k++;
+    }
+    res.taille=taille-k/res.taille_coefficient;
+    res.bits=res.taille_coefficient*(res.degre+1);
+
+    res.p=(unsigned int*)realloc(res.p, res.bits);
+
+    return res;
+}
+
+Poly div_poly(Poly *a, Poly *b , Poly* r){
+    int kr=a->degre;
+    int kb=b->degre;
+    int i;
+    Poly tmp, q=creer_poly_nul(a->corps);    
+    
+    *r=copie_poly(a);
+    
+    /* tant que le degré du dividende est plus grand ou égal à celui du 
+     * diviseur*/
+    while(kr>=kb){
+        /* on cherche le coefficient qui, multiplié au diviseur, donne 
+         * celui du dividende :*/
+        for(i=0; i<a->corps; i++){
+            if(((i*get(b, kb))%(b->corps)) == get(r, kr)){
+                
+                // on met à jour une variable temporaire :
+                tmp=creer_poly_nul(a->corps);
+                
+                set(&tmp, kr-kb, i);
+                // on met à jour le quotient : 
+                set(&q, kr-kb, i);
+                
+                /* on soustrait (comme dans l'algorithme) pour obtenir le 
+                 * nouveau dividende :*/
+                
+                tmp=mult_poly(b, &tmp);
+                
+                *r=diff_poly(r, &tmp);
+                
+                // on met à jour le degré du dividende :
+                kr=r->degre;
+                
+                break;
+            }
+        }
+    }    
+    
+    return q;
+}
 
 // ------------------------------------------------------------------//
 //                                 MAIN

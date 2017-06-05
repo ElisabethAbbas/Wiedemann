@@ -375,6 +375,173 @@ Poly div_poly(Poly *a, Poly *b , Poly* r){
     return q;
 }
 
+// comparaison de deux polynômes
+int egaux (Poly* p1, Poly* p2){
+    int res = 1;
+    int d1 = p1->degre;
+    int d2 = p2 ->degre;
+    if (d1 !=d2) {
+        res = 0;
+    }
+    else{
+        for (int i = 0; i<= p1->degre; i++) {
+            if (get(p1, i)!=get(p2, i)) {
+                res = 0;
+            }
+        }
+    }
+    return res;
+}
+
+// ALGO DE BEZOUT
+Poly bezout(Poly *u, Poly *v, Poly a, Poly b){
+    int corps = u->corps;
+    Poly nul = creer_poly_nul(corps);
+    Poly temp =nul;
+    unsigned int t0[1] = {0};
+    unsigned int t1[1] = {1};
+    Poly u0=creer_poly(t0, 0, corps);
+    Poly u1= creer_poly(t0, 0, corps);
+    Poly v0=creer_poly(t1, 0, corps);
+    Poly v1=creer_poly(t1,0, corps);
+    Poly ut, vt;
+    Poly r0 = a;
+    Poly r1 = b;
+    Poly rt;
+    Poly q;
+    
+    
+    while(egaux(&r1, &nul)==0){
+        q=div_poly(&r0, &r1, &nul);
+        
+        //cout << "q = " << q << endl;
+        
+        // colonne des restes :
+        temp =mult_poly(&q, &r1);
+        rt=diff_poly(&r0, &temp);
+        r0=r1;
+        r1=rt;
+        temp=nul;
+        
+        // colonne des u :
+        //cout << "u0 = " << u0 << endl;
+        //cout << "u1 = " << u1 << endl;
+        temp=mult_poly(&q, &u1);
+        ut=diff_poly(&u0, &temp);
+        u0=u1;
+        u1=ut;
+        temp=nul;
+        
+        // colonne des v :
+        //cout << "v0 = " << v0 << endl;
+        //cout << "v1 = " << v1 << endl;
+        temp =mult_poly(&q, &v1);
+        vt=diff_poly(&v0, &temp);
+        v0=v1;
+        v1=vt;
+        temp=nul;
+    }
+    // mise à jour de u et v
+    *u=u0;
+    *v=v0;
+    return r0;
+}
+
+// BEZOUT POUR ALGO 1 : tous dans le même corps
+Poly bezout_algo1(Poly *u, Poly *v, Poly a, Poly b){
+    int corps = u->corps;
+    Poly nul = creer_poly_nul(corps);
+    Poly temp =nul;
+    unsigned int t0[1] = {0};
+    unsigned int t1[1] = {1};
+    Poly u0=creer_poly(t0, 0, corps);
+    Poly u1= creer_poly(t0, 0, corps);
+    Poly v0=creer_poly(t1, 0, corps);
+    Poly v1=creer_poly(t1,0, corps);
+    Poly ut, vt;
+    Poly r0 = a;
+    Poly r1 = b;
+    Poly rt;
+    Poly q;
+    int d_n = b.degre/2;
+    
+    while(egaux(&r1, &nul)==0){
+        q=div_poly(&r0, &r1, &nul);
+        
+        // colonne des restes :
+        temp=mult_poly(&q, &r1);
+        rt=diff_poly(&r0, &temp);
+        r0=r1;
+        r1=rt;
+        temp=nul;
+        
+        // colonne des u :
+        temp=mult_poly(&q, &u1);
+        ut=diff_poly(&u0, &temp);
+        u0=u1;
+        u1=ut;
+        temp=nul;
+        
+        // colonne des v :
+        temp=mult_poly(&q, &v1);
+        vt=diff_poly(&v0, &temp);
+        v0=v1;
+        v1=vt;
+        temp=nul;
+        
+        // mise à jour de u et v
+        if(u1.degre<=d_n && r1.degre<d_n){
+            *u=u1;
+            *v=r1;
+            return q;
+        }
+    }
+    return r0;
+}
+
+// ALGO 1 : calcul du polynôme minimal d'une suite
+Poly pol_min(int d, Poly u){
+    int corps = u.corps;
+    Poly nul = creer_poly_nul(corps);
+    Poly s, t, s2, t2;
+    
+    Poly x;
+    unsigned int x2d[2*d+1];
+    for (int i = 0; i<=2*d; i++) {
+        x2d[i] = 0;
+    }
+    x2d[2*d+1] = 1;
+    x = creer_poly(x2d, 2*d, corps);
+    
+    Poly pgcd;
+    int d2, deg_s, deg_t;
+    int i=0, j=0;
+    
+    // on fait bezout tant que les degrés de t et s ne correspondent pas :
+    bezout_algo1(&t, &s, u, x);
+    
+    // on faire le pgcd de t et s pour les diviser et ainsi les rendre premiers entre eux
+    pgcd=bezout(&t2, &s2, t, s);
+    
+    t=div_poly(&t, &pgcd, &nul);
+    //s=div_p(s, pgcd); en commentaire, car on a pas besoin de s
+    // on cherche à rendre rev(t) unitaire,
+    // donc le dernier chiffre différent de 0 doit être égal à 1 :
+    
+    // on cherche le degré du polynôme minimal :
+    deg_t=t.degre;
+    deg_s=s.degre;
+    
+    if(deg_s+1>deg_t)
+        d2=deg_s+1;
+    else
+        d2=deg_t;
+    
+    // on renvoie le "reversal" de t
+    return rev(t);
+}
+
+
 // ------------------------------------------------------------------//
 //                                 MAIN
 // ------------------------------------------------------------------//
@@ -385,7 +552,7 @@ int main(int argc, char** argv) {
     unsigned int tt[]={3};
     pp=creer_poly(tt, 0, 4);
     
-    
+
     // TEST DE REV_P
     unsigned int t[]={2,3,4,1,0,0,1,0,4,7,5,8,6,3,6,7,12,8,3,4,4,1};
     p=creer_poly(t, 21, 23);
@@ -396,6 +563,7 @@ int main(int argc, char** argv) {
     print_poly(&rev_p);
     cout << endl;
     
+    /*
     // TESTS DE DIFF_P
     unsigned int t2[]={2,4,3};
     p2=creer_poly(t2,2,7);
@@ -467,6 +635,7 @@ int main(int argc, char** argv) {
     cout << "=" << endl;
     print_poly(&p13);
     cout << endl;
+    */
     
     return 0;
 }

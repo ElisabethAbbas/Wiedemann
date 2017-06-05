@@ -307,16 +307,7 @@ Poly mult_poly(Poly *a, Poly *b){
     int r=0;
     int i,j;
     
-    // degré de res
-    unsigned int d=(a->degre)*(b->degre);
-
-    // tableau de coefficients nuls
-    unsigned int taille = (a->taille)*(b->taille);
-    
     res=creer_poly_nul(a->corps);
-    
-    res.corps=a->corps;
-    res.degre=d;
 
     //set(&res, d, (get(a, a->degre)+1)*(get(b, (b->degre))+1)); // coeff de plus haut degré
     for(i=0; i<=a->degre; i++){
@@ -325,20 +316,6 @@ Poly mult_poly(Poly *a, Poly *b){
             set(&res, i+j, (r+ get(a, i)*get(b, j))%res.corps);
         }
     }
-    
-    res.coefficients_par_case=a->coefficients_par_case;
-    res.taille_coefficient=a->taille_coefficient;
-
-    // on met à jour res :
-    unsigned int k=0;
-    while(res.degre>0 && get(&res, res.degre)==0){
-        res.degre--;
-        k++;
-    }
-    res.taille=taille-k/res.taille_coefficient;
-    res.bits=res.taille_coefficient*(res.degre+1);
-
-    res.p=(unsigned int*)realloc(res.p, res.bits);
 
     return res;
 }

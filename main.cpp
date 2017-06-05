@@ -4,6 +4,7 @@
 
 using namespace std;
 
+// Structures de données :
 
 struct Poly {
 	unsigned int* p; // contient les coefficients de p
@@ -14,6 +15,19 @@ struct Poly {
         unsigned int taille_coefficient; // nombre de bits pour un coefficient
         unsigned coefficients_par_case; // nombre de coefficients par case
 };
+
+struct Coefficient {
+    unsigned int i; // numéro de ligne
+    unsigned int j; // numéro de colonne
+    unsigned int valeur;
+};
+
+struct Matrice{
+    unsigned int lignes; // nombre de lignes
+    unsigned int colonnes; // nombre de colonnes
+    Coefficient *coefficients; // tableau de Coefficient
+};
+
 int get(Poly *p, unsigned int i);
 int set(Poly *p, unsigned int i, unsigned int a);
 Poly creer_poly_nul(int corps);

@@ -371,7 +371,6 @@ Poly div_poly(Poly *a, Poly *b , Poly* r){
             }
         }
     }    
-    
     return q;
 }
 
@@ -395,11 +394,12 @@ int egaux (Poly* p1, Poly* p2){
 
 // ALGO DE BEZOUT
 Poly bezout(Poly *u, Poly *v, Poly a, Poly b){
+    int compteur = 0;
     int corps = u->corps;
-    Poly nul = creer_poly_nul(corps);
-    Poly temp =nul;
     unsigned int t0[1] = {0};
     unsigned int t1[1] = {1};
+    Poly nul=creer_poly(t0, 0, corps);
+    Poly temp=nul;
     Poly u0=creer_poly(t0, 0, corps);
     Poly u1= creer_poly(t0, 0, corps);
     Poly v0=creer_poly(t1, 0, corps);
@@ -412,31 +412,54 @@ Poly bezout(Poly *u, Poly *v, Poly a, Poly b){
     
     
     while(egaux(&r1, &nul)==0){
+        compteur ++;
+        cout << "ETAPE: " << compteur << endl;
         q=div_poly(&r0, &r1, &nul);
+        cout << "q= ";
+        print_poly(&q);
         
         //cout << "q = " << q << endl;
         
+        cout << "colonne des restes"<<endl;
         // colonne des restes :
         temp =mult_poly(&q, &r1);
+        cout << "temp = ";
+        print_poly(&temp);
         rt=diff_poly(&r0, &temp);
+        cout << "rt =";
+        print_poly(&rt);
         r0=r1;
         r1=rt;
         temp=nul;
         
+        cout << "colonne des u"<<endl;
         // colonne des u :
-        //cout << "u0 = " << u0 << endl;
-        //cout << "u1 = " << u1 << endl;
+        cout << "u0 = ";
+        print_poly(&u0);
+        cout << "u1 = " ;
+        print_poly(&u1);
         temp=mult_poly(&q, &u1);
+        cout << "temp = ";
+        print_poly(&temp);
         ut=diff_poly(&u0, &temp);
+        cout << "ut = ";
+        print_poly(&ut);
         u0=u1;
         u1=ut;
         temp=nul;
         
+        cout << "colonne des v"<<endl;
         // colonne des v :
-        //cout << "v0 = " << v0 << endl;
-        //cout << "v1 = " << v1 << endl;
+        cout << "v0 = ";
+        print_poly(&v0);
+        cout << "v1 = " ;
+        print_poly(&v1);
         temp =mult_poly(&q, &v1);
+        cout << "temp = ";
+        print_poly(&temp);
         vt=diff_poly(&v0, &temp);
+        cout << "vt = ";
+        print_poly(&vt);
         v0=v1;
         v1=vt;
         temp=nul;
@@ -444,8 +467,11 @@ Poly bezout(Poly *u, Poly *v, Poly a, Poly b){
     // mise à jour de u et v
     *u=u0;
     *v=v0;
+    cout << "pgcd = ";
+    print_poly(&r0);
     return r0;
 }
+
 
 // BEZOUT POUR ALGO 1 : tous dans le même corps
 Poly bezout_algo1(Poly *u, Poly *v, Poly a, Poly b){

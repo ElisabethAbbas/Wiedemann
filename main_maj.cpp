@@ -62,6 +62,7 @@ void print_details_vecteur(Vecteur *v);
 void print_vecteur(Vecteur *v);
 
 Matrice creer_matrice(unsigned int t[][3], unsigned int taille, unsigned int n, unsigned int corps);
+Matrice creer_matrice_nulle(unsigned int n, unsigned int corps);
 void set(Matrice *m, unsigned int i, unsigned int j, unsigned int a);
 unsigned int get(Matrice *m, unsigned int i, unsigned int j);
 void print_matrice(Matrice *m);
@@ -1124,6 +1125,26 @@ Poly bezout(Poly *u, Poly *v, Poly a, Poly b){
     return r0;
 }*/
 
+Matrice creer_matrice_nulle(unsigned int n, unsigned int corps){
+    Matrice m;
+    unsigned int i, b=0;
+    
+    m.n=n;
+    m.nb_coefficients=1;
+    m.corps=corps;
+    m.taille_coefficient=ceil(log2(m.corps));
+    m.taille_n=ceil(log2(m.n));
+    m.coefficients_par_case=sizeof(unsigned int)*8/(m.taille_coefficient+
+            (m.taille_n*2));
+    m.taille=1;
+    m.coefficients=(unsigned int*)malloc(m.nb_coefficients*
+            (m.taille_coefficient+(m.taille_n*2)));
+    
+    m.coefficients[0]=0;
+    set(&m, 0, 0, 0);
+    
+    return m;
+}
 
 // ------------------------------------------------------------------//
 //                                 MAIN
